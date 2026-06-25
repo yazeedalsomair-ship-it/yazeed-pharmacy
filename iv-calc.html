@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IV Dose Calculator — SGH Pharmacy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#1a2332;--navy2:#22324a;--green:#2d8b8b;--green2:#22a866;
+  --bg:#EEF6F6;--card:#fff;--ink:#1a2332;--muted:#5b7878;--line:#d9eaea;
+  --blue:#2F77C7;--blue-bg:#DEEBFB;
+  --orange:#E8A317;--orange-bg:#FFF3D6;
+  --red:#D9622E;--red-bg:#FBE4DC;
+  --purple:#5247A8;--purple-bg:#E4E2F4;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased}
+
+/* HEADER */
+header{background:linear-gradient(120deg,var(--navy),var(--navy2));color:#fff;border-radius:0 0 20px 20px}
+.hd{max-width:960px;margin:0 auto;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}
+.crest{width:44px;height:44px;border-radius:11px;background:#fff;display:grid;place-items:center}
+.crest span{font-weight:800;color:var(--navy);font-size:18px}
+.brand h1{font-size:16px;font-weight:800}
+.brand p{font-size:12px;color:#bcd2e8;font-weight:500}
+.backlink{font-size:12.5px;color:#cfe0f1;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:6px}
+.backlink:hover{color:#fff}
+
+/* NAV TABS */
+.navwrap{max-width:960px;margin:14px auto 0;padding:0 14px}
+.navtabs{display:flex;background:var(--card);border:1px solid var(--line);border-radius:13px;overflow:hidden}
+.navtab{flex:1;text-align:center;padding:11px 4px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;border:none;background:none;font-family:inherit;transition:color .15s,background .15s;line-height:1.3}
+.navtab.active{color:var(--green);background:var(--bg)}
+.navtab:hover:not(.active){color:var(--ink)}
+
+.wrap{max-width:960px;margin:0 auto;padding:0 14px 60px}
+.view{display:none}.view.active{display:block}
+
+/* DRUG PRESET STRIP */
+.preset-strip{display:flex;gap:6px;flex-wrap:wrap;margin-top:16px}
+.preset-btn{font-family:inherit;font-size:11.5px;font-weight:700;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:20px;padding:5px 12px;cursor:pointer;transition:border-color .12s,color .12s,background .12s}
+.preset-btn:hover,.preset-btn.active{border-color:var(--green);color:var(--green);background:#f0fafa}
+.preset-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
+
+/* CALC CARD */
+.calccard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin-top:14px;box-shadow:0 6px 22px rgba(16,34,54,.06)}
+.calccard h3{font-size:15px;font-weight:800;color:var(--navy);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.divider{border:none;border-top:1px solid var(--line);margin:16px 0}
+
+/* FORM */
+.fg{margin-bottom:12px}
+.fg label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.fg input,.fg select,.fg textarea{width:100%;font-family:inherit;font-size:14px;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;color:var(--ink);background:#fff;-webkit-appearance:none;appearance:none}
+.fg input:focus,.fg select:focus{outline:2px solid var(--green);border-color:var(--green)}
+.fgrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fgrow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:480px){.fgrow,.fgrow3{grid-template-columns:1fr}}
+.input-unit{position:relative}
+.input-unit input{padding-right:52px}
+.input-unit .unit{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;font-weight:700;color:var(--muted);pointer-events:none}
+
+/* RESULT BOX */
+.result{background:linear-gradient(135deg,#e8f6f6,#d4f0ee);border:1.5px solid #b0ddd9;border-radius:14px;padding:18px 20px;margin-top:14px}
+.result .res-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.result .res-val{font-size:32px;font-weight:800;color:var(--navy);line-height:1.1}
+.result .res-unit{font-size:14px;font-weight:600;color:var(--green);margin-left:4px}
+.result .res-sub{font-size:12.5px;color:var(--muted);margin-top:6px;font-weight:500}
+.result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:14px}
+.result-item{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:12px 14px}
+.result-item .ri-label{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.result-item .ri-val{font-size:20px;font-weight:800;color:var(--navy);margin-top:2px}
+.result-item .ri-unit{font-size:11.5px;color:var(--green);font-weight:600}
+
+/* NOTE BOX */
+.notebox{background:var(--orange-bg);border:1px solid #f0d090;border-radius:11px;padding:11px 14px;margin-top:10px;font-size:12.5px;color:#7a4a00;font-weight:500}
+.notebox strong{font-weight:700}
+.warnbox{background:var(--red-bg);border:1px solid #f0b090;border-radius:11px;padding:11px 14px;margin-top:10px;font-size:12.5px;color:#7a2a00;font-weight:500}
+.infobox{background:var(--blue-bg);border:1px solid #a8c8f0;border-radius:11px;padding:11px 14px;margin-top:10px;font-size:12.5px;color:#1a3f70;font-weight:500}
+
+/* BTN */
+.btn{font-family:inherit;font-weight:700;font-size:13px;border:1.5px solid var(--line);background:#fff;color:var(--navy);border-radius:9px;padding:9px 16px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:border-color .12s,color .12s,background .12s}
+.btn:hover{border-color:var(--green);color:var(--green)}
+.btn.primary{background:var(--green);color:#fff;border-color:var(--green)}
+.btn.primary:hover{background:#256f6f}
+.btn-row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+
+/* BUD BADGE */
+.bud-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:5px 12px;border-radius:20px;margin-right:6px;margin-top:4px}
+.bud-rt{background:#FFF3D6;color:#7a4a00}
+.bud-fr{background:#DEEBFB;color:#1a4080}
+.bud-fz{background:#E4E2F4;color:#3A327A}
+
+/* LABEL */
+.label-preview{border:2px solid var(--navy);border-radius:10px;padding:16px 18px;margin-top:14px;background:#fff;font-family:'Inter',sans-serif}
+.lp-header{background:var(--navy);color:#fff;margin:-16px -18px 12px;padding:10px 18px;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:center}
+.lp-header .lp-hosp{font-size:12px;font-weight:700}
+.lp-header .lp-dept{font-size:11px;color:#bcd2e8}
+.lp-drug{font-size:22px;font-weight:800;color:var(--navy);margin-bottom:4px}
+.lp-dose{font-size:14px;font-weight:700;color:var(--green);margin-bottom:10px}
+.lp-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;margin-bottom:10px}
+.lp-row .lp-k{color:var(--muted);font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.3px}
+.lp-row .lp-v{font-weight:600;color:var(--ink)}
+.lp-bud{background:var(--red-bg);color:var(--red);font-weight:800;font-size:13px;border-radius:8px;padding:7px 12px;margin-top:8px;text-align:center}
+.lp-footer{margin-top:10px;font-size:11px;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px;display:flex;justify-content:space-between}
+
+footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}
+
+/* PRINT */
+@media print{
+  header,.navwrap,.preset-strip,.btn-row,footer,.fg:not(.print-keep){display:none!important}
+  .label-preview{border:2px solid #000;max-width:400px;margin:0 auto;page-break-inside:avoid}
+  body{background:#fff}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hd">
+    <div class="brand">
+      <div class="crest"><span>SGH</span></div>
+      <div><h1>IV Dose Calculator</h1><p>Saudi German Hospital — Hail Pharmacy</p></div>
+    </div>
+    <a class="backlink" href="index.html">← Portal</a>
+  </div>
+</header>
+
+<div class="navwrap">
+  <div class="navtabs">
+    <button class="navtab active" onclick="switchTab('dose')">💊 Dose &amp; Volume</button>
+    <button class="navtab" onclick="switchTab('rate')">⏱ Infusion Rate</button>
+    <button class="navtab" onclick="switchTab('recon')">🧪 Reconstitution</button>
+    <button class="navtab" onclick="switchTab('label')">🏷 IV Label</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ========== TAB 1: DOSE & VOLUME ========== -->
+<div class="view active" id="tab-dose">
+  <div class="preset-strip" id="dose-presets"></div>
+
+  <div class="calccard">
+    <h3>💊 Dose &amp; Volume Calculator</h3>
+
+    <div class="fgrow">
+      <div class="fg"><label>Drug Name</label>
+        <input type="text" id="d-drug" placeholder="e.g. Vancomycin">
+      </div>
+      <div class="fg"><label>Dose Type</label>
+        <select id="d-type" onchange="toggleWeightField()">
+          <option value="fixed">Fixed dose (mg)</option>
+          <option value="per-kg">Weight-based (mg/kg)</option>
+          <option value="per-m2">BSA-based (mg/m²)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="fgrow">
+      <div class="fg"><label>Required Dose</label>
+        <div class="input-unit">
+          <input type="number" id="d-dose" placeholder="0" min="0" step="any" oninput="calcDose()">
+          <span class="unit" id="d-dose-unit">mg</span>
+        </div>
+      </div>
+      <div class="fg" id="d-weight-field"><label>Patient Weight</label>
+        <div class="input-unit">
+          <input type="number" id="d-weight" placeholder="0" min="0" step="0.1" oninput="calcDose()">
+          <span class="unit">kg</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="fgrow">
+      <div class="fg"><label>Available Concentration</label>
+        <div class="input-unit">
+          <input type="number" id="d-conc" placeholder="0" min="0" step="any" oninput="calcDose()">
+          <span class="unit" id="d-conc-unit">mg/mL</span>
+        </div>
+      </div>
+      <div class="fg"><label>Max Single Dose (optional)</label>
+        <div class="input-unit">
+          <input type="number" id="d-max" placeholder="—" min="0" step="any" oninput="calcDose()">
+          <span class="unit">mg</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="fg"><label>Patient Height (for BSA)</label>
+      <div class="input-unit" style="max-width:200px">
+        <input type="number" id="d-height" placeholder="0" min="0" step="1" oninput="calcDose()">
+        <span class="unit">cm</span>
+      </div>
+    </div>
+
+    <div id="dose-result" style="display:none">
+      <div class="result">
+        <div class="res-label">Volume to Withdraw</div>
+        <div><span class="res-val" id="dr-vol">—</span><span class="res-unit">mL</span></div>
+        <div class="res-sub" id="dr-sub"></div>
+      </div>
+      <div class="result-grid">
+        <div class="result-item"><div class="ri-label">Total Dose</div><div class="ri-val" id="dr-totaldose">—</div><div class="ri-unit">mg</div></div>
+        <div class="result-item"><div class="ri-label">Concentration</div><div class="ri-val" id="dr-conc">—</div><div class="ri-unit">mg/mL</div></div>
+        <div class="result-item" id="dr-bsa-item" style="display:none"><div class="ri-label">BSA</div><div class="ri-val" id="dr-bsa">—</div><div class="ri-unit">m²</div></div>
+      </div>
+      <div class="warnbox" id="dr-warn" style="display:none"></div>
+      <div class="notebox" id="dr-note" style="display:none"></div>
+    </div>
+  </div>
+
+  <div class="calccard" style="margin-top:12px">
+    <h3>📝 Quick Reference — Common Doses</h3>
+    <div id="drug-ref-table"></div>
+  </div>
+
+  <footer>Saudi German Hospital Pharmacy, Hail</footer>
+  <footer style="margin-top:4px;font-weight:700;color:var(--navy)">Made by Dr.Yazeed Alsomair</footer>
+</div>
+
+<!-- ========== TAB 2: INFUSION RATE ========== -->
+<div class="view" id="tab-rate">
+  <div class="preset-strip" id="rate-presets"></div>
+
+  <div class="calccard">
+    <h3>⏱ Infusion Rate Calculator</h3>
+
+    <div class="fgrow">
+      <div class="fg"><label>Drug Name</label>
+        <input type="text" id="r-drug" placeholder="e.g. Norepinephrine">
+      </div>
+      <div class="fg"><label>Patient Weight</label>
+        <div class="input-unit">
+          <input type="number" id="r-weight" placeholder="70" min="0" step="0.1" oninput="calcRate()">
+          <span class="unit">kg</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="fgrow">
+      <div class="fg"><label>Drug Amount in Bag / Syringe</label>
+        <div class="input-unit">
+          <input type="number" id="r-drugamt" placeholder="0" min="0" step="any" oninput="calcRate()">
+          <span class="unit" id="r-amt-unit">mg</span>
+        </div>
+      </div>
+      <div class="fg"><label>Total Volume of Bag / Syringe</label>
+        <div class="input-unit">
+          <input type="number" id="r-vol" placeholder="0" min="0" step="any" oninput="calcRate()">
+          <span class="unit">mL</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="fgrow">
+      <div class="fg"><label>Desired Dose Rate</label>
+        <div class="input-unit">
+          <input type="number" id="r-doserate" placeholder="0" min="0" step="any" oninput="calcRate()">
+          <span class="unit" id="r-rate-display">—</span>
+        </div>
+      </div>
+      <div class="fg"><label>Dose Rate Units</label>
+        <select id="r-unit" onchange="updateRateUnit();calcRate()">
+          <optgroup label="Weight-based">
+            <option value="mcg/kg/min">mcg/kg/min</option>
+            <option value="mcg/kg/hr">mcg/kg/hr</option>
+            <option value="mg/kg/min">mg/kg/min</option>
+            <option value="mg/kg/hr">mg/kg/hr</option>
+            <option value="units/kg/hr">units/kg/hr</option>
+          </optgroup>
+          <optgroup label="Fixed">
+            <option value="mcg/min">mcg/min</option>
+            <option value="mg/min">mg/min</option>
+            <option value="mg/hr">mg/hr</option>
+            <option value="units/hr">units/hr</option>
+            <option value="mL/hr">mL/hr (direct)</option>
+          </optgroup>
+        </select>
+      </div>
+    </div>
+
+    <div id="rate-result" style="display:none">
+      <div class="result">
+        <div class="res-label">Infusion Rate</div>
+        <div><span class="res-val" id="rr-rate">—</span><span class="res-unit">mL/hr</span></div>
+        <div class="res-sub" id="rr-sub"></div>
+      </div>
+      <div class="result-grid">
+        <div class="result-item"><div class="ri-label">Concentration</div><div class="ri-val" id="rr-conc">—</div><div class="ri-unit" id="rr-conc-unit">mcg/mL</div></div>
+        <div class="result-item"><div class="ri-label">Dose / hr</div><div class="ri-val" id="rr-perhr">—</div><div class="ri-unit" id="rr-perhr-unit">mcg/hr</div></div>
+        <div class="result-item"><div class="ri-label">Duration (bag)</div><div class="ri-val" id="rr-dur">—</div><div class="ri-unit">hr</div></div>
+      </div>
+      <div class="notebox" id="rr-note" style="display:none"></div>
+    </div>
+  </div>
+
+  <div class="calccard" style="margin-top:12px">
+    <h3>📊 Vasopressor / Inotrope Quick Reference</h3>
+    <div id="vasopressor-ref"></div>
+  </div>
+
+  <footer>Saudi German Hospital Pharmacy, Hail</footer>
+  <footer style="margin-top:4px;font-weight:700;color:var(--navy)">Made by Dr.Yazeed Alsomair</footer>
+</div>
+
+<!-- ========== TAB 3: RECONSTITUTION ========== -->
+<div class="view" id="tab-recon">
+  <div class="preset-strip" id="recon-presets"></div>
+
+  <div class="calccard">
+    <h3>🧪 Reconstitution Calculator</h3>
+
+    <div class="fgrow">
+      <div class="fg"><label>Drug Name</label>
+        <input type="text" id="rc-drug" placeholder="e.g. Meropenem">
+      </div>
+      <div class="fg"><label>Vial Drug Amount</label>
+        <div class="input-unit">
+          <input type="number" id="rc-amount" placeholder="0" min="0" step="any" oninput="calcRecon()">
+          <span class="unit" id="rc-unit">mg</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="fgrow">
+      <div class="fg"><label>Diluent Volume Added</label>
+        <div class="input-unit">
+          <input type="number" id="rc-diluent" placeholder="0" min="0" step="any" oninput="calcRecon()">
+          <span class="unit">mL</span>
+        </div>
+      </div>
+      <div class="fg"><label>Powder Displacement (optional)</label>
+        <div class="input-unit">
+          <input type="number" id="rc-displace" placeholder="0" min="0" step="any" oninput="calcRecon()">
+          <span class="unit">mL</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="fg"><label>Diluent Type</label>
+      <select id="rc-diluent-type">
+        <option>Sterile Water for Injection (SWFI)</option>
+        <option>Normal Saline (NS 0.9%)</option>
+        <option>Dextrose 5% (D5W)</option>
+        <option>Bacteriostatic Water for Injection</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <div id="recon-result" style="display:none">
+      <div class="result">
+        <div class="res-label">Reconstituted Concentration</div>
+        <div><span class="res-val" id="rcr-conc">—</span><span class="res-unit" id="rcr-unit">mg/mL</span></div>
+        <div class="res-sub" id="rcr-sub"></div>
+      </div>
+    </div>
+
+    <hr class="divider">
+    <h3 style="font-size:14px;margin-bottom:12px">➡ Then: Calculate Volume for Dose</h3>
+
+    <div class="fgrow">
+      <div class="fg"><label>Required Dose</label>
+        <div class="input-unit">
+          <input type="number" id="rc-dose" placeholder="0" min="0" step="any" oninput="calcReconDose()">
+          <span class="unit" id="rc-dose-unit">mg</span>
+        </div>
+      </div>
+      <div class="fg"><label>Further Dilute Into</label>
+        <div class="input-unit">
+          <input type="number" id="rc-final-vol" placeholder="100" min="0" step="any" oninput="calcReconDose()">
+          <span class="unit">mL bag</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="recon-dose-result" style="display:none">
+      <div class="result-grid">
+        <div class="result-item"><div class="ri-label">Volume to Draw</div><div class="ri-val" id="rcd-vol">—</div><div class="ri-unit">mL</div></div>
+        <div class="result-item"><div class="ri-label">Final Concentration</div><div class="ri-val" id="rcd-final-conc">—</div><div class="ri-unit" id="rcd-final-unit">mg/mL</div></div>
+        <div class="result-item"><div class="ri-label">Remaining in Vial</div><div class="ri-val" id="rcd-remain">—</div><div class="ri-unit">mg</div></div>
+      </div>
+    </div>
+
+    <hr class="divider">
+    <h3 style="font-size:14px;margin-bottom:12px">🗓 Beyond Use Date (BUD)</h3>
+
+    <div class="fgrow">
+      <div class="fg"><label>Prep Date &amp; Time</label>
+        <input type="datetime-local" id="rc-prepdt" oninput="calcBUD()">
+      </div>
+      <div class="fg"><label>Storage Condition</label>
+        <select id="rc-storage" onchange="calcBUD()">
+          <option value="">— Select —</option>
+          <option value="rt">Room Temperature (15–25°C)</option>
+          <option value="fr">Refrigerated (2–8°C)</option>
+          <option value="fz">Frozen (≤-10°C)</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg"><label>BUD Period (hours or days)</label>
+      <div style="display:flex;gap:8px">
+        <div class="input-unit" style="max-width:130px">
+          <input type="number" id="rc-bud-val" placeholder="24" min="0" step="1" oninput="calcBUD()">
+          <span class="unit"></span>
+        </div>
+        <select id="rc-bud-unit" style="flex:1;font-family:inherit;font-size:14px;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px" onchange="calcBUD()">
+          <option value="hr">Hours</option>
+          <option value="day">Days</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="bud-result" style="display:none">
+      <div class="result">
+        <div class="res-label">Discard After (BUD)</div>
+        <div class="res-val" id="bud-datetime" style="font-size:20px">—</div>
+        <div class="res-sub" id="bud-remaining"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="calccard" style="margin-top:12px">
+    <h3>📋 Common BUD Reference (USP &lt;797&gt;)</h3>
+    <div id="bud-ref-table"></div>
+  </div>
+
+  <footer>Saudi German Hospital Pharmacy, Hail</footer>
+  <footer style="margin-top:4px;font-weight:700;color:var(--navy)">Made by Dr.Yazeed Alsomair</footer>
+</div>
+
+<!-- ========== TAB 4: IV LABEL ========== -->
+<div class="view" id="tab-label">
+  <div class="calccard">
+    <h3>🏷 IV Label Generator</h3>
+
+    <div class="fgrow">
+      <div class="fg print-keep"><label>Patient Name</label>
+        <input type="text" id="lb-patient" placeholder="Patient Full Name" oninput="renderLabel()">
+      </div>
+      <div class="fg print-keep"><label>MRN / Bed</label>
+        <input type="text" id="lb-mrn" placeholder="e.g. 123456 / Bed 4B" oninput="renderLabel()">
+      </div>
+    </div>
+
+    <div class="fgrow">
+      <div class="fg"><label>Drug Name</label>
+        <input type="text" id="lb-drug" placeholder="e.g. Vancomycin" oninput="renderLabel()">
+      </div>
+      <div class="fg"><label>Dose</label>
+        <input type="text" id="lb-dose" placeholder="e.g. 1000 mg" oninput="renderLabel()">
+      </div>
+    </div>
+
+    <div class="fgrow">
+      <div class="fg"><label>Volume Drawn (drug)</label>
+        <input type="text" id="lb-vol-drug" placeholder="e.g. 20 mL" oninput="renderLabel()">
+      </div>
+      <div class="fg"><label>Diluent &amp; Volume</label>
+        <input type="text" id="lb-diluent" placeholder="e.g. NS 100 mL" oninput="renderLabel()">
+      </div>
+    </div>
+
+    <div class="fgrow">
+      <div class="fg"><label>Final Concentration</label>
+        <input type="text" id="lb-finalconc" placeholder="e.g. 5 mg/mL" oninput="renderLabel()">
+      </div>
+      <div class="fg"><label>Infusion Route</label>
+        <select id="lb-route" onchange="renderLabel()">
+          <option>IV Infusion</option>
+          <option>IV Push</option>
+          <option>Peripheral IV</option>
+          <option>Central Line</option>
+          <option>PICC Line</option>
+          <option>Subcutaneous</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="fgrow">
+      <div class="fg"><label>Infusion Rate / Duration</label>
+        <input type="text" id="lb-rate" placeholder="e.g. 100 mL/hr or over 60 min" oninput="renderLabel()">
+      </div>
+      <div class="fg"><label>Storage</label>
+        <select id="lb-storage" onchange="renderLabel()">
+          <option>Room Temperature</option>
+          <option>Refrigerate (2–8°C)</option>
+          <option>Protect from Light</option>
+          <option>Refrigerate + Protect from Light</option>
+          <option>Frozen</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="fgrow">
+      <div class="fg"><label>Preparation Date &amp; Time</label>
+        <input type="datetime-local" id="lb-prepdt" oninput="renderLabel()">
+      </div>
+      <div class="fg"><label>BUD (Discard After)</label>
+        <input type="datetime-local" id="lb-bud" oninput="renderLabel()">
+      </div>
+    </div>
+
+    <div class="fg"><label>Prepared By</label>
+      <input type="text" id="lb-prepby" placeholder="Pharmacist name" oninput="renderLabel()">
+    </div>
+
+    <div class="fg"><label>Special Instructions (optional)</label>
+      <input type="text" id="lb-special" placeholder="e.g. Monitor renal function, avoid rapid infusion" oninput="renderLabel()">
+    </div>
+
+    <div class="btn-row">
+      <button class="btn primary" onclick="window.print()">🖨 Print Label</button>
+      <button class="btn" onclick="clearLabel()">🗑 Clear</button>
+      <button class="btn" onclick="setNow()">⏱ Set Prep Time = Now</button>
+    </div>
+
+    <div id="label-preview"></div>
+  </div>
+
+  <footer>Saudi German Hospital Pharmacy, Hail</footer>
+  <footer style="margin-top:4px;font-weight:700;color:var(--navy)">Made by Dr.Yazeed Alsomair</footer>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+/* ===========================
+   DRUG DATABASE
+=========================== */
+const DRUGS = [
+  // Antibiotics
+  { name:"Vancomycin", cat:"Antibiotic", unit:"mg",
+    reconAmt:500, reconVol:10, displacement:0,
+    stdConc:5, stdBag:100,
+    doseStr:"15–20 mg/kg q8–12h (AUC/MIC guided)", doseType:"per-kg", doseVal:20, maxDose:3000,
+    bud:{rt:"24 hr", fr:"14 days"},
+    notes:"Infuse over ≥60 min (≤10 mg/min). Red Man Syndrome with rapid infusion." },
+
+  { name:"Piperacillin-Tazobactam", cat:"Antibiotic", unit:"g",
+    reconAmt:4.5, reconVol:20, displacement:0,
+    stdConc:0.04, stdBag:100,
+    doseStr:"4.5 g q6h or 3.375 g q6h (extended 4hr infusion)", doseType:"fixed", doseVal:4.5,
+    bud:{rt:"12 hr", fr:"5 days"},
+    notes:"For extended infusion (4hr): stable up to 12hr at RT." },
+
+  { name:"Meropenem", cat:"Antibiotic", unit:"mg",
+    reconAmt:1000, reconVol:20, displacement:0,
+    stdConc:5, stdBag:100,
+    doseStr:"1–2 g q8h (up to 2g q8h for severe infections)", doseType:"fixed", doseVal:1000,
+    bud:{rt:"3 hr (std infusion) / 8 hr (extended)", fr:"24 hr"},
+    notes:"Extended infusion (3–4hr) preferred for resistant organisms." },
+
+  { name:"Amikacin", cat:"Antibiotic", unit:"mg",
+    reconAmt:500, reconVol:4, displacement:0,
+    stdConc:2.5, stdBag:100,
+    doseStr:"15–20 mg/kg q24h (ODA)", doseType:"per-kg", doseVal:15, maxDose:1500,
+    bud:{rt:"24 hr", fr:"14 days"},
+    notes:"Infuse over 30–60 min. Monitor levels: peak 50–65 mcg/mL, trough <1." },
+
+  { name:"Cefazolin", cat:"Antibiotic", unit:"g",
+    reconAmt:1, reconVol:10, displacement:0,
+    stdConc:20, stdBag:50,
+    doseStr:"1–2 g q8h", doseType:"fixed", doseVal:1,
+    bud:{rt:"24 hr", fr:"10 days"},
+    notes:"Infuse over 15–30 min." },
+
+  { name:"Metronidazole", cat:"Antibiotic", unit:"mg",
+    reconAmt:500, reconVol:100, displacement:0,
+    stdConc:5, stdBag:100,
+    doseStr:"500 mg q8h or 1g q12h", doseType:"fixed", doseVal:500,
+    bud:{rt:"24 hr", fr:"30 days"},
+    notes:"Infuse over 30–60 min. Protect from light." },
+
+  { name:"Gentamicin", cat:"Antibiotic", unit:"mg",
+    reconAmt:80, reconVol:2, displacement:0,
+    stdConc:1.6, stdBag:50,
+    doseStr:"5–7 mg/kg q24h (ODA)", doseType:"per-kg", doseVal:5, maxDose:600,
+    bud:{rt:"24 hr", fr:"14 days"},
+    notes:"ODA: 5–7 mg/kg. Monitor levels: peak 15–20 mg/L, trough <1 mg/L." },
+
+  // Vasopressors / Inotropes
+  { name:"Norepinephrine", cat:"Vasopressor", unit:"mg", amtUnit:"mg",
+    reconAmt:4, reconVol:250, displacement:0,
+    stdConc:0.016, stdBag:250,
+    doseStr:"0.01–3 mcg/kg/min", doseType:"per-kg",
+    rateUnit:"mcg/kg/min", rateDefault:0.1,
+    bud:{rt:"24 hr", fr:"—"},
+    notes:"Central line preferred. Titrate to MAP target (≥65 mmHg)." },
+
+  { name:"Dopamine", cat:"Vasopressor", unit:"mg", amtUnit:"mg",
+    reconAmt:200, reconVol:250, displacement:0,
+    stdConc:0.8, stdBag:250,
+    doseStr:"2–20 mcg/kg/min", doseType:"per-kg",
+    rateUnit:"mcg/kg/min", rateDefault:5,
+    bud:{rt:"24 hr", fr:"—"},
+    notes:"Renal dose: 2–5 mcg/kg/min. Cardiac: 5–10. Vasopressor: 10–20." },
+
+  { name:"Dobutamine", cat:"Inotrope", unit:"mg", amtUnit:"mg",
+    reconAmt:250, reconVol:250, displacement:0,
+    stdConc:1, stdBag:250,
+    doseStr:"2–20 mcg/kg/min", doseType:"per-kg",
+    rateUnit:"mcg/kg/min", rateDefault:5,
+    bud:{rt:"24 hr", fr:"—"},
+    notes:"Inotrope. Titrate to cardiac output/hemodynamics." },
+
+  { name:"Epinephrine", cat:"Vasopressor", unit:"mg", amtUnit:"mg",
+    reconAmt:4, reconVol:250, displacement:0,
+    stdConc:0.016, stdBag:250,
+    doseStr:"0.01–1 mcg/kg/min", doseType:"per-kg",
+    rateUnit:"mcg/kg/min", rateDefault:0.1,
+    bud:{rt:"24 hr", fr:"—"},
+    notes:"High-alert medication. Central line required for infusions >0.1 mcg/kg/min." },
+
+  { name:"Vasopressin", cat:"Vasopressor", unit:"units", amtUnit:"units",
+    reconAmt:20, reconVol:100, displacement:0,
+    stdConc:0.2, stdBag:100,
+    doseStr:"0.01–0.04 units/min (fixed dose)", doseType:"fixed",
+    rateUnit:"units/hr", rateDefault:0.6,
+    bud:{rt:"24 hr", fr:"—"},
+    notes:"Fixed dose (not titrated). 0.03–0.04 units/min adjunct in septic shock." },
+
+  // Analgesics / Sedatives
+  { name:"Morphine", cat:"Analgesic", unit:"mg",
+    reconAmt:10, reconVol:1, displacement:0,
+    stdConc:1, stdBag:50,
+    doseStr:"0.05–0.2 mg/kg IV, or 2–4 mg/hr infusion", doseType:"per-kg", doseVal:0.1, maxDose:15,
+    bud:{rt:"24 hr", fr:"7 days"},
+    notes:"Titrate to pain score. Naloxone available at bedside. Monitor resp." },
+
+  { name:"Midazolam", cat:"Sedative", unit:"mg",
+    reconAmt:5, reconVol:1, displacement:0,
+    stdConc:1, stdBag:50,
+    doseStr:"0.02–0.1 mg/kg/hr infusion", doseType:"per-kg",
+    rateUnit:"mg/kg/hr", rateDefault:0.05,
+    bud:{rt:"24 hr", fr:"—"},
+    notes:"Titrate to RASS −2 to 0 in ICU. Can accumulate with prolonged use." },
+
+  { name:"Propofol", cat:"Sedative", unit:"mg",
+    reconAmt:200, reconVol:20, displacement:0,
+    stdConc:10, stdBag:50,
+    doseStr:"5–50 mcg/kg/min (0.3–3 mg/kg/hr)", doseType:"per-kg",
+    rateUnit:"mcg/kg/min", rateDefault:10,
+    bud:{rt:"6 hr", fr:"—"},
+    notes:"Ready to use (10 mg/mL). Lipid formulation. Monitor triglycerides. Strict aseptic technique; discard after 6hr." },
+
+  // Anticoagulants
+  { name:"Heparin (UFH)", cat:"Anticoagulant", unit:"units", amtUnit:"units",
+    reconAmt:25000, reconVol:250, displacement:0,
+    stdConc:100, stdBag:250,
+    doseStr:"80 units/kg bolus → 18 units/kg/hr; adjust per aPTT", doseType:"per-kg",
+    rateUnit:"units/kg/hr", rateDefault:18,
+    bud:{rt:"24 hr", fr:"—"},
+    notes:"Weight-based protocol. Monitor aPTT q6h after change. Antidote: Protamine." },
+
+  // Other
+  { name:"Pantoprazole", cat:"GI", unit:"mg",
+    reconAmt:40, reconVol:10, displacement:0,
+    stdConc:0.4, stdBag:100,
+    doseStr:"40 mg q24h or 80 mg loading then 8 mg/hr", doseType:"fixed", doseVal:40,
+    bud:{rt:"12 hr", fr:"—"},
+    notes:"Reconstitute with NS or D5W. Protect from light." },
+
+  { name:"Magnesium Sulfate", cat:"Electrolyte", unit:"g",
+    reconAmt:5, reconVol:10, displacement:0,
+    stdConc:0.5, stdBag:100,
+    doseStr:"1–2 g IV for hypomagnesemia; 4–6 g loading for eclampsia", doseType:"fixed", doseVal:2,
+    bud:{rt:"24 hr", fr:"—"},
+    notes:"Max infusion rate 1 g/min (emergency only). Monitor DTRs, BP, respirations." },
+
+  { name:"Potassium Chloride", cat:"Electrolyte", unit:"mEq",
+    reconAmt:20, reconVol:10, displacement:0,
+    stdConc:2, stdBag:100,
+    doseStr:"10–20 mEq/hr IV (max 40 mEq/hr via central line)", doseType:"fixed", doseVal:20,
+    bud:{rt:"24 hr", fr:"—"},
+    notes:"⚠ HIGH ALERT. Never administer undiluted. Max peripheral: 10 mEq/hr." },
+
+  { name:"Furosemide", cat:"Diuretic", unit:"mg",
+    reconAmt:40, reconVol:4, displacement:0,
+    stdConc:10, stdBag:50,
+    doseStr:"20–80 mg IV push or 10–40 mg/hr infusion", doseType:"fixed", doseVal:40,
+    bud:{rt:"24 hr", fr:"—"},
+    notes:"IV push max rate: 4 mg/min to avoid ototoxicity. Protect from light." },
+];
+
+/* ===========================
+   BUD REFERENCE TABLE
+=========================== */
+const BUD_REF = [
+  { drug:"Vancomycin", rt:"24 hr", fr:"14 days", fz:"N/A", notes:"125-5000 mg/L in NS or D5W" },
+  { drug:"Piperacillin-Tazobactam", rt:"12 hr", fr:"5 days", fz:"N/A", notes:"Std infusion; extended (4hr) ≤12 hr RT" },
+  { drug:"Meropenem", rt:"3 hr (std) / 8 hr (extended)", fr:"24 hr", fz:"N/A", notes:"Stability decreases rapidly at RT" },
+  { drug:"Amikacin", rt:"24 hr", fr:"14 days", fz:"N/A", notes:"2.5–5 mg/mL in NS" },
+  { drug:"Cefazolin", rt:"24 hr", fr:"10 days", fz:"N/A", notes:"-" },
+  { drug:"Metronidazole RTU", rt:"24 hr", fr:"30 days", fz:"N/A", notes:"Protect from light" },
+  { drug:"Norepinephrine", rt:"24 hr", fr:"—", fz:"—", notes:"Protect from light; discard if discoloured" },
+  { drug:"Dopamine", rt:"24 hr", fr:"—", fz:"—", notes:"-" },
+  { drug:"Heparin 100 u/mL", rt:"24 hr", fr:"—", fz:"—", notes:"-" },
+  { drug:"Morphine 1 mg/mL", rt:"24 hr", fr:"7 days", fz:"—", notes:"In NS or D5W" },
+  { drug:"Propofol (open vial)", rt:"6 hr", fr:"—", fz:"—", notes:"Discard 6hr after vial opened" },
+  { drug:"Midazolam 1 mg/mL", rt:"24 hr", fr:"—", fz:"—", notes:"-" },
+  { drug:"Pantoprazole 0.4 mg/mL", rt:"12 hr", fr:"—", fz:"—", notes:"-" },
+  { drug:"Potassium 2 mEq/mL", rt:"24 hr", fr:"—", fz:"—", notes:"Premixed bags" },
+];
+
+/* ===========================
+   VASOPRESSOR REFERENCE
+=========================== */
+const VASO_REF = [
+  { drug:"Norepinephrine", dose:"0.01–3 mcg/kg/min", target:"MAP ≥65 mmHg", note:"First-line septic shock" },
+  { drug:"Epinephrine",    dose:"0.01–1 mcg/kg/min",  target:"Cardiac arrest / anaphylaxis", note:"High alert" },
+  { drug:"Dopamine",       dose:"2–20 mcg/kg/min",    target:"MAP, HR, CO", note:"Renal dose 2–5 mcg/kg/min" },
+  { drug:"Dobutamine",     dose:"2–20 mcg/kg/min",    target:"Cardiac output", note:"Inotrope only" },
+  { drug:"Vasopressin",    dose:"0.01–0.04 units/min (fixed)", target:"MAP adjunct", note:"Not titrated" },
+  { drug:"Phenylephrine",  dose:"0.5–6 mcg/kg/min",   target:"MAP", note:"Pure alpha; reduces HR" },
+  { drug:"Milrinone",      dose:"0.375–0.75 mcg/kg/min", target:"CO (cardiogenic)", note:"Phosphodiesterase inhibitor" },
+];
+
+/* ===========================
+   TAB SWITCH
+=========================== */
+function switchTab(t){
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  document.querySelectorAll(".navtab").forEach(b=>b.classList.remove("active"));
+  document.getElementById("tab-"+t).classList.add("active");
+  const tabs=document.querySelectorAll(".navtab");
+  const idx=["dose","rate","recon","label"].indexOf(t);
+  if(tabs[idx]) tabs[idx].classList.add("active");
+}
+
+/* ===========================
+   BUILD PRESET BUTTONS
+=========================== */
+function buildPresets(containerId, cats, onClick){
+  const c=document.getElementById(containerId);
+  if(!c)return;
+  c.innerHTML="";
+  const filtered=DRUGS.filter(d=>!cats||cats.includes(d.cat));
+  // Build by category
+  const groups={};
+  filtered.forEach(d=>{ (groups[d.cat]=groups[d.cat]||[]).push(d); });
+  Object.entries(groups).forEach(([cat,drugs])=>{
+    const lbl=document.createElement("span");
+    lbl.style="font-size:10.5px;font-weight:700;color:var(--muted);align-self:center;margin-right:2px;text-transform:uppercase";
+    lbl.textContent=cat+":";
+    c.appendChild(lbl);
+    drugs.forEach(d=>{
+      const b=document.createElement("button");
+      b.className="preset-btn";
+      b.textContent=d.name;
+      b.onclick=()=>{ c.querySelectorAll(".preset-btn").forEach(x=>x.classList.remove("active")); b.classList.add("active"); onClick(d); };
+      c.appendChild(b);
+    });
+  });
+}
+
+/* ===========================
+   TAB 1: DOSE & VOLUME
+=========================== */
+function toggleWeightField(){
+  const t=document.getElementById("d-type").value;
+  document.getElementById("d-weight-field").style.display=(t==="fixed")?"none":"block";
+  document.getElementById("d-dose-unit").textContent=(t==="per-m2")?"mg/m²":(t==="per-kg")?"mg/kg":"mg";
+  document.getElementById("dr-bsa-item").style.display=(t==="per-m2")?"block":"none";
+  calcDose();
+}
+
+function calcBSA(wt,ht){
+  if(!wt||!ht||wt<=0||ht<=0) return null;
+  return Math.sqrt((wt*ht)/3600);
+}
+
+function calcDose(){
+  const type=document.getElementById("d-type").value;
+  const doseInput=parseFloat(document.getElementById("d-dose").value)||0;
+  const wt=parseFloat(document.getElementById("d-weight").value)||0;
+  const conc=parseFloat(document.getElementById("d-conc").value)||0;
+  const maxDose=parseFloat(document.getElementById("d-max").value)||0;
+  const ht=parseFloat(document.getElementById("d-height").value)||0;
+
+  if(!doseInput||!conc){ document.getElementById("dose-result").style.display="none"; return; }
+
+  let totalDose=doseInput;
+  let bsa=null;
+  if(type==="per-kg"){
+    if(!wt){ document.getElementById("dose-result").style.display="none"; return; }
+    totalDose=doseInput*wt;
+  } else if(type==="per-m2"){
+    bsa=calcBSA(wt,ht);
+    if(!bsa){ document.getElementById("dose-result").style.display="none"; return; }
+    totalDose=doseInput*bsa;
+  }
+
+  let capped=false;
+  if(maxDose>0&&totalDose>maxDose){ totalDose=maxDose; capped=true; }
+
+  const vol=totalDose/conc;
+
+  document.getElementById("dose-result").style.display="block";
+  document.getElementById("dr-vol").textContent=vol.toFixed(2);
+  document.getElementById("dr-totaldose").textContent=totalDose.toFixed(1);
+  document.getElementById("dr-conc").textContent=conc;
+
+  let sub=`${type==="per-kg"?doseInput+" mg/kg × "+wt+" kg":type==="per-m2"?doseInput+" mg/m² × "+bsa.toFixed(2)+" m²":doseInput+" mg"} ÷ ${conc} mg/mL`;
+  document.getElementById("dr-sub").textContent=sub;
+
+  if(bsa){
+    document.getElementById("dr-bsa-item").style.display="block";
+    document.getElementById("dr-bsa").textContent=bsa.toFixed(2);
+  }
+
+  const warn=document.getElementById("dr-warn");
+  if(capped){ warn.style.display="block"; warn.textContent=`⚠ Dose capped at max single dose (${maxDose} mg). Calculated dose was ${(doseInput*(type==="per-kg"?wt:1)).toFixed(1)} mg.`; }
+  else warn.style.display="none";
+}
+
+function loadDrugDose(d){
+  document.getElementById("d-drug").value=d.name;
+  if(d.doseType) document.getElementById("d-type").value=d.doseType;
+  toggleWeightField();
+  if(d.doseVal) document.getElementById("d-dose").value=d.doseVal;
+  document.getElementById("d-conc").value=d.stdConc||"";
+  if(d.maxDose) document.getElementById("d-max").value=d.maxDose;
+  const note=document.getElementById("dr-note");
+  if(d.notes){ note.style.display="block"; note.innerHTML=`<strong>ℹ Note:</strong> ${d.notes}`; }
+  else note.style.display="none";
+  calcDose();
+}
+
+function buildDrugRef(){
+  const cats=["Antibiotic","Analgesic","Anticoagulant","Electrolyte","Diuretic","GI"];
+  const drugs=DRUGS.filter(d=>cats.includes(d.cat));
+  const rows=drugs.map(d=>`
+    <tr style="border-bottom:1px solid var(--line)">
+      <td style="padding:8px 10px;font-weight:700">${d.name}</td>
+      <td style="padding:8px 10px;font-size:12.5px;color:var(--ink)">${d.doseStr||"—"}</td>
+      <td style="padding:8px 10px;font-size:12px;color:var(--muted)">${d.notes||""}</td>
+    </tr>`).join("");
+  document.getElementById("drug-ref-table").innerHTML=`
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="border-bottom:2px solid var(--line)">
+        <th style="padding:8px 10px;text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase">Drug</th>
+        <th style="padding:8px 10px;text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase">Typical Dose</th>
+        <th style="padding:8px 10px;text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase">Notes</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+/* ===========================
+   TAB 2: INFUSION RATE
+=========================== */
+function updateRateUnit(){
+  const u=document.getElementById("r-unit").value;
+  document.getElementById("r-rate-display").textContent=u;
+  // switch amt unit label
+  const amtU=document.getElementById("r-amt-unit");
+  if(u.includes("units")) amtU.textContent="units";
+  else if(u.includes("mcg")) amtU.textContent="mcg";
+  else amtU.textContent="mg";
+}
+
+function calcRate(){
+  const unit=document.getElementById("r-unit").value;
+  const drugAmt=parseFloat(document.getElementById("r-drugamt").value)||0;
+  const bagVol=parseFloat(document.getElementById("r-vol").value)||0;
+  const wt=parseFloat(document.getElementById("r-weight").value)||70;
+  const doseRate=parseFloat(document.getElementById("r-doserate").value)||0;
+
+  if(!drugAmt||!bagVol||!doseRate){ document.getElementById("rate-result").style.display="none"; return; }
+
+  // Concentration in bag
+  const concInBag=drugAmt/bagVol; // units/mL or mg/mL or mcg/mL
+
+  let rateMLhr=0;
+  // Convert dose rate to mL/hr
+  // concInBag is in (drug_unit)/mL; drug_unit matches the r-amt-unit
+  // Need to make sure units match
+  let dosePerHr=0; // in same unit as concInBag
+  let dosePerHrLabel="";
+  let concLabel="";
+
+  if(unit==="mcg/kg/min"){
+    // If drug is in mg, convert: mcg/min → mg/hr = mcg/min * 60 / 1000
+    // concInBag might be mg/mL → convert to mcg/mL
+    const concMcgMl=concInBag*1000; // mg/mL → mcg/mL
+    dosePerHr=doseRate*wt*60; // mcg/hr
+    rateMLhr=dosePerHr/concMcgMl;
+    dosePerHrLabel=dosePerHr.toFixed(1)+" mcg/hr";
+    concLabel=concMcgMl.toFixed(2)+" mcg/mL";
+    document.getElementById("rr-conc-unit").textContent="mcg/mL";
+    document.getElementById("rr-perhr-unit").textContent="mcg/hr";
+  } else if(unit==="mcg/kg/hr"){
+    const concMcgMl=concInBag*1000;
+    dosePerHr=doseRate*wt;
+    rateMLhr=dosePerHr/concMcgMl;
+    dosePerHrLabel=dosePerHr.toFixed(1)+" mcg/hr";
+    concLabel=concMcgMl.toFixed(2)+" mcg/mL";
+    document.getElementById("rr-conc-unit").textContent="mcg/mL";
+    document.getElementById("rr-perhr-unit").textContent="mcg/hr";
+  } else if(unit==="mg/kg/min"){
+    dosePerHr=doseRate*wt*60;
+    rateMLhr=dosePerHr/concInBag;
+    dosePerHrLabel=dosePerHr.toFixed(2)+" mg/hr";
+    concLabel=concInBag.toFixed(3)+" mg/mL";
+    document.getElementById("rr-conc-unit").textContent="mg/mL";
+    document.getElementById("rr-perhr-unit").textContent="mg/hr";
+  } else if(unit==="mg/kg/hr"){
+    dosePerHr=doseRate*wt;
+    rateMLhr=dosePerHr/concInBag;
+    dosePerHrLabel=dosePerHr.toFixed(2)+" mg/hr";
+    concLabel=concInBag.toFixed(3)+" mg/mL";
+    document.getElementById("rr-conc-unit").textContent="mg/mL";
+    document.getElementById("rr-perhr-unit").textContent="mg/hr";
+  } else if(unit==="units/kg/hr"){
+    dosePerHr=doseRate*wt;
+    rateMLhr=dosePerHr/concInBag;
+    dosePerHrLabel=dosePerHr.toFixed(0)+" units/hr";
+    concLabel=concInBag.toFixed(2)+" units/mL";
+    document.getElementById("rr-conc-unit").textContent="units/mL";
+    document.getElementById("rr-perhr-unit").textContent="units/hr";
+  } else if(unit==="mcg/min"){
+    const concMcgMl=concInBag*1000;
+    dosePerHr=doseRate*60;
+    rateMLhr=dosePerHr/concMcgMl;
+    dosePerHrLabel=dosePerHr.toFixed(1)+" mcg/hr";
+    concLabel=concMcgMl.toFixed(2)+" mcg/mL";
+    document.getElementById("rr-conc-unit").textContent="mcg/mL";
+    document.getElementById("rr-perhr-unit").textContent="mcg/hr";
+  } else if(unit==="mg/min"){
+    dosePerHr=doseRate*60;
+    rateMLhr=dosePerHr/concInBag;
+    dosePerHrLabel=dosePerHr.toFixed(2)+" mg/hr";
+    concLabel=concInBag.toFixed(3)+" mg/mL";
+    document.getElementById("rr-conc-unit").textContent="mg/mL";
+    document.getElementById("rr-perhr-unit").textContent="mg/hr";
+  } else if(unit==="mg/hr"){
+    dosePerHr=doseRate;
+    rateMLhr=dosePerHr/concInBag;
+    dosePerHrLabel=dosePerHr.toFixed(2)+" mg/hr";
+    concLabel=concInBag.toFixed(3)+" mg/mL";
+    document.getElementById("rr-conc-unit").textContent="mg/mL";
+    document.getElementById("rr-perhr-unit").textContent="mg/hr";
+  } else if(unit==="units/hr"){
+    dosePerHr=doseRate;
+    rateMLhr=dosePerHr/concInBag;
+    dosePerHrLabel=dosePerHr.toFixed(0)+" units/hr";
+    concLabel=concInBag.toFixed(2)+" units/mL";
+    document.getElementById("rr-conc-unit").textContent="units/mL";
+    document.getElementById("rr-perhr-unit").textContent="units/hr";
+  } else { // mL/hr direct
+    rateMLhr=doseRate;
+    dosePerHr=doseRate*concInBag;
+    dosePerHrLabel=dosePerHr.toFixed(2)+" mg/hr";
+    concLabel=concInBag.toFixed(3)+" mg/mL";
+    document.getElementById("rr-conc-unit").textContent="mg/mL";
+    document.getElementById("rr-perhr-unit").textContent="mg/hr";
+  }
+
+  const dur=rateMLhr>0?(bagVol/rateMLhr):0;
+
+  document.getElementById("rate-result").style.display="block";
+  document.getElementById("rr-rate").textContent=rateMLhr.toFixed(2);
+  document.getElementById("rr-sub").textContent=`Concentration: ${concLabel}`;
+  document.getElementById("rr-conc").textContent=parseFloat(concLabel).toFixed(2);
+  document.getElementById("rr-perhr").textContent=parseFloat(dosePerHrLabel).toFixed(dosePerHrLabel.includes("units")?0:2);
+  document.getElementById("rr-dur").textContent=dur>0?dur.toFixed(1):"—";
+}
+
+function loadDrugRate(d){
+  document.getElementById("r-drug").value=d.name;
+  document.getElementById("r-drugamt").value=d.reconAmt||"";
+  document.getElementById("r-vol").value=d.reconVol||"";
+  if(d.rateUnit){ document.getElementById("r-unit").value=d.rateUnit; updateRateUnit(); }
+  if(d.rateDefault) document.getElementById("r-doserate").value=d.rateDefault;
+  const note=document.getElementById("rr-note");
+  if(d.notes){ note.style.display="block"; note.innerHTML=`<strong>ℹ Note:</strong> ${d.notes}`; }
+  else note.style.display="none";
+  calcRate();
+}
+
+function buildVasoRef(){
+  document.getElementById("vasopressor-ref").innerHTML=`
+    <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+      <thead><tr style="border-bottom:2px solid var(--line)">
+        <th style="padding:8px;text-align:left;font-size:10.5px;color:var(--muted);text-transform:uppercase">Drug</th>
+        <th style="padding:8px;text-align:left;font-size:10.5px;color:var(--muted);text-transform:uppercase">Dose Range</th>
+        <th style="padding:8px;text-align:left;font-size:10.5px;color:var(--muted);text-transform:uppercase">Target</th>
+        <th style="padding:8px;text-align:left;font-size:10.5px;color:var(--muted);text-transform:uppercase">Notes</th>
+      </tr></thead>
+      <tbody>${VASO_REF.map(r=>`<tr style="border-bottom:1px solid var(--line)">
+        <td style="padding:8px;font-weight:700">${r.drug}</td>
+        <td style="padding:8px;color:var(--green);font-weight:600">${r.dose}</td>
+        <td style="padding:8px">${r.target}</td>
+        <td style="padding:8px;color:var(--muted)">${r.note}</td>
+      </tr>`).join("")}</tbody>
+    </table>`;
+}
+
+/* ===========================
+   TAB 3: RECONSTITUTION
+=========================== */
+function calcRecon(){
+  const amt=parseFloat(document.getElementById("rc-amount").value)||0;
+  const dil=parseFloat(document.getElementById("rc-diluent").value)||0;
+  const dis=parseFloat(document.getElementById("rc-displace").value)||0;
+  if(!amt||!dil){ document.getElementById("recon-result").style.display="none"; return; }
+  const finalVol=dil+dis;
+  const conc=amt/finalVol;
+  document.getElementById("recon-result").style.display="block";
+  document.getElementById("rcr-conc").textContent=conc.toFixed(3);
+  document.getElementById("rcr-sub").textContent=`${amt} ${document.getElementById("rc-unit").textContent} ÷ ${finalVol} mL total = ${conc.toFixed(3)} mg/mL`;
+  calcReconDose();
+}
+
+function calcReconDose(){
+  const amt=parseFloat(document.getElementById("rc-amount").value)||0;
+  const dil=parseFloat(document.getElementById("rc-diluent").value)||0;
+  const dis=parseFloat(document.getElementById("rc-displace").value)||0;
+  const dose=parseFloat(document.getElementById("rc-dose").value)||0;
+  const finalBagVol=parseFloat(document.getElementById("rc-final-vol").value)||0;
+  if(!amt||!dil){ document.getElementById("recon-dose-result").style.display="none"; return; }
+  const conc=amt/(dil+dis);
+  if(!dose){ document.getElementById("recon-dose-result").style.display="none"; return; }
+  const vol=dose/conc;
+  const remain=amt-dose;
+  const finalConc=finalBagVol>0?dose/finalBagVol:0;
+  document.getElementById("recon-dose-result").style.display="block";
+  document.getElementById("rcd-vol").textContent=vol.toFixed(2);
+  document.getElementById("rcd-remain").textContent=remain.toFixed(1);
+  document.getElementById("rcd-final-conc").textContent=finalConc>0?finalConc.toFixed(3):"—";
+}
+
+function calcBUD(){
+  const dt=document.getElementById("rc-prepdt").value;
+  const val=parseInt(document.getElementById("rc-bud-val").value)||0;
+  const unit=document.getElementById("rc-bud-unit").value;
+  if(!dt||!val){ document.getElementById("bud-result").style.display="none"; return; }
+  const prepMs=new Date(dt).getTime();
+  const addMs=unit==="hr"?val*3600000:val*86400000;
+  const budDate=new Date(prepMs+addMs);
+  const now=Date.now();
+  const remaining=budDate.getTime()-now;
+  const remHr=Math.max(0,remaining/3600000);
+  const budStr=budDate.toLocaleString("en-GB",{weekday:"short",day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
+  document.getElementById("bud-result").style.display="block";
+  document.getElementById("bud-datetime").textContent=budStr;
+  document.getElementById("bud-remaining").textContent=remHr>0?`${remHr.toFixed(1)} hours remaining`:"⚠ BUD has passed — discard product";
+}
+
+function loadDrugRecon(d){
+  document.getElementById("rc-drug").value=d.name;
+  document.getElementById("rc-amount").value=d.reconAmt||"";
+  document.getElementById("rc-diluent").value=d.reconVol||"";
+  document.getElementById("rc-displace").value=d.displacement||0;
+  const unit=document.getElementById("rc-unit");
+  unit.textContent=d.unit||"mg";
+  const doseUnit=document.getElementById("rc-dose-unit");
+  doseUnit.textContent=d.unit||"mg";
+  if(d.doseVal) document.getElementById("rc-dose").value=d.doseVal;
+  calcRecon();
+}
+
+function buildBudRef(){
+  const rows=BUD_REF.map(r=>`
+    <tr style="border-bottom:1px solid var(--line)">
+      <td style="padding:8px 10px;font-weight:700;font-size:12.5px">${r.drug}</td>
+      <td style="padding:8px 10px"><span class="bud-badge bud-rt">${r.rt}</span></td>
+      <td style="padding:8px 10px"><span class="bud-badge bud-fr">${r.fr}</span></td>
+      <td style="padding:8px 10px;font-size:11.5px;color:var(--muted)">${r.notes}</td>
+    </tr>`).join("");
+  document.getElementById("bud-ref-table").innerHTML=`
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="border-bottom:2px solid var(--line)">
+        <th style="padding:8px 10px;text-align:left;font-size:10.5px;color:var(--muted);text-transform:uppercase">Drug</th>
+        <th style="padding:8px 10px;text-align:left;font-size:10.5px;color:var(--muted);text-transform:uppercase">🌡 Room Temp</th>
+        <th style="padding:8px 10px;text-align:left;font-size:10.5px;color:var(--muted);text-transform:uppercase">❄ Fridge</th>
+        <th style="padding:8px 10px;text-align:left;font-size:10.5px;color:var(--muted);text-transform:uppercase">Notes</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+/* ===========================
+   TAB 4: IV LABEL
+=========================== */
+function fmtDT(val){
+  if(!val) return "—";
+  const d=new Date(val);
+  return d.toLocaleString("en-GB",{weekday:"short",day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
+}
+
+function renderLabel(){
+  const patient=document.getElementById("lb-patient").value||"—";
+  const mrn=document.getElementById("lb-mrn").value||"—";
+  const drug=document.getElementById("lb-drug").value||"—";
+  const dose=document.getElementById("lb-dose").value||"—";
+  const volDrug=document.getElementById("lb-vol-drug").value||"—";
+  const diluent=document.getElementById("lb-diluent").value||"—";
+  const finalConc=document.getElementById("lb-finalconc").value||"—";
+  const route=document.getElementById("lb-route").value||"IV";
+  const rate=document.getElementById("lb-rate").value||"—";
+  const storage=document.getElementById("lb-storage").value||"Room Temperature";
+  const prepdt=document.getElementById("lb-prepdt").value;
+  const bud=document.getElementById("lb-bud").value;
+  const prepby=document.getElementById("lb-prepby").value||"—";
+  const special=document.getElementById("lb-special").value;
+
+  document.getElementById("label-preview").innerHTML=`
+    <div class="label-preview">
+      <div class="lp-header">
+        <div>
+          <div class="lp-hosp">Saudi German Hospital — Hail</div>
+          <div class="lp-dept">Pharmacy Department · IV Admixture</div>
+        </div>
+        <div style="font-size:11px;color:#bcd2e8">${fmtDT(prepdt)}</div>
+      </div>
+
+      <div class="lp-drug">${drug}</div>
+      <div class="lp-dose">${dose} in ${diluent}</div>
+
+      <div class="lp-grid">
+        <div class="lp-row"><div class="lp-k">Patient</div><div class="lp-v">${patient}</div></div>
+        <div class="lp-row"><div class="lp-k">MRN / Bed</div><div class="lp-v">${mrn}</div></div>
+        <div class="lp-row"><div class="lp-k">Drug Volume</div><div class="lp-v">${volDrug}</div></div>
+        <div class="lp-row"><div class="lp-k">Final Concentration</div><div class="lp-v">${finalConc}</div></div>
+        <div class="lp-row"><div class="lp-k">Route</div><div class="lp-v">${route}</div></div>
+        <div class="lp-row"><div class="lp-k">Rate / Duration</div><div class="lp-v">${rate}</div></div>
+        <div class="lp-row"><div class="lp-k">Storage</div><div class="lp-v">${storage}</div></div>
+        <div class="lp-row"><div class="lp-k">Prepared By</div><div class="lp-v">${prepby}</div></div>
+      </div>
+
+      ${special?`<div style="background:#fffbe6;border:1px solid #f0e090;border-radius:7px;padding:7px 10px;font-size:12px;font-weight:700;color:#7a4a00;margin-top:6px">⚠ ${special}</div>`:""}
+
+      <div class="lp-bud">⏱ DISCARD AFTER: ${fmtDT(bud)}</div>
+
+      <div class="lp-footer">
+        <span>SGH Pharmacy — Hail • Prepared: ${fmtDT(prepdt)}</span>
+        <span>Made by Dr.Yazeed Alsomair</span>
+      </div>
+    </div>`;
+}
+
+function clearLabel(){
+  ["lb-patient","lb-mrn","lb-drug","lb-dose","lb-vol-drug","lb-diluent","lb-finalconc","lb-rate","lb-prepdt","lb-bud","lb-prepby","lb-special"]
+    .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
+  document.getElementById("label-preview").innerHTML="";
+}
+
+function setNow(){
+  const now=new Date();
+  const local=new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,16);
+  document.getElementById("lb-prepdt").value=local;
+  renderLabel();
+}
+
+/* ===========================
+   INIT
+=========================== */
+buildPresets("dose-presets",
+  ["Antibiotic","Analgesic","Anticoagulant","Electrolyte","Diuretic","GI"],
+  loadDrugDose);
+
+buildPresets("rate-presets",
+  ["Vasopressor","Inotrope","Sedative","Anticoagulant"],
+  loadDrugRate);
+
+buildPresets("recon-presets",
+  ["Antibiotic","Analgesic","GI","Sedative"],
+  loadDrugRecon);
+
+buildDrugRef();
+buildVasoRef();
+buildBudRef();
+updateRateUnit();
+toggleWeightField();
+renderLabel();
+
+// Set prep datetime default to now
+setNow();
+</script>
+</body>
+</html>
