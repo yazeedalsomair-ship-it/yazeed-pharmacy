@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Tasks — SGH Pharmacy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+:root{
+  --navy:#1a2332;--navy2:#22324a;--green:#2d8b8b;
+  --bg:#EEF6F6;--card:#fff;--ink:#1a2332;--muted:#5b7878;--line:#d9eaea;
+  --out-bg:#FFF3D6;--out-ink:#8A5A00;--out-bar:#E8A317;
+  --in-bg:#DEEBFB;--in-ink:#1B4F86;--in-bar:#2F77C7;
+  --nt-bg:#E4E2F4;--nt-ink:#3A327A;--nt-bar:#5247A8;
+  --iv-bg:#E2F4E8;--iv-ink:#176A3D;--iv-bar:#28A75C;
+  --na-bg:#FBE4DC;--na-ink:#9C3B16;--na-bar:#D9622E;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:780px;margin:0 auto;padding:0 14px 60px}
+header{background:linear-gradient(120deg,var(--navy),var(--navy2));color:#fff;border-radius:0 0 20px 20px}
+.hd{max-width:780px;margin:0 auto;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}
+.crest{width:44px;height:44px;border-radius:11px;background:#fff;display:grid;place-items:center}
+.crest span{font-weight:800;color:var(--navy);font-size:18px}
+.brand h1{font-size:16px;font-weight:800}
+.brand p{font-size:12px;color:#bcd2e8;font-weight:500}
+.backlink{font-size:12.5px;color:#cfe0f1;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:6px}
+.backlink:hover{color:#fff}
+.livetag{font-size:11px;color:#cfe0f1;display:flex;align-items:center;gap:6px;font-weight:600}
+.livedot{width:8px;height:8px;border-radius:50%;background:#36d27a;box-shadow:0 0 0 0 rgba(54,210,122,.6);animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(54,210,122,.5)}70%{box-shadow:0 0 0 6px rgba(54,210,122,0)}100%{box-shadow:0 0 0 0 rgba(54,210,122,0)}}
+
+.deptrow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:16px}
+@media(max-width:620px){.deptrow{grid-template-columns:repeat(2,1fr)}}
+.deptbtn{background:var(--card);border:1.5px solid var(--line);border-radius:13px;padding:13px 8px;text-align:center;cursor:pointer;font-family:inherit;font-weight:700;font-size:12.5px;color:var(--ink);transition:transform .12s,box-shadow .12s}
+.deptbtn .ic{font-size:20px;display:block;margin-bottom:4px}
+.deptbtn:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(16,34,54,.08)}
+.deptbtn.active{color:#fff;border-color:transparent}
+.deptbtn.OUT.active{background:linear-gradient(120deg,#E8A317,#caa10f)}
+.deptbtn.IN.active{background:linear-gradient(120deg,#2F77C7,#225fa3)}
+.deptbtn.NARCOTIC.active{background:linear-gradient(120deg,#D9622E,#b84e22)}
+.deptbtn.IV.active{background:linear-gradient(120deg,#28A75C,#1f8a49)}
+
+.progresscard{background:var(--card);border:1px solid var(--line);border-radius:16px;margin-top:16px;padding:18px 20px;box-shadow:0 8px 26px rgba(16,34,54,.06)}
+.progresshead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.progresshead h3{font-size:15px;font-weight:800;color:var(--navy)}
+.progresshead .pct{font-size:13px;font-weight:800;color:#256f6f}
+.bar{height:9px;background:var(--bg);border-radius:6px;overflow:hidden}
+.barfill{height:100%;background:linear-gradient(90deg,var(--green),#22a866);border-radius:6px;transition:width .3s ease}
+.progressmeta{display:flex;justify-content:space-between;margin-top:8px;font-size:11.5px;color:var(--muted);font-weight:600}
+
+.tasklist{margin-top:14px;display:flex;flex-direction:column;gap:9px}
+.taskitem{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:13px 15px;display:flex;align-items:center;gap:13px;cursor:pointer;user-select:none;transition:background .12s,border-color .12s}
+.taskitem:hover{border-color:var(--green)}
+.taskitem.done{background:#EAF6F6;border-color:#BFE3E3}
+.checkbox{width:24px;height:24px;border-radius:8px;border:2px solid var(--line);flex:none;display:grid;place-items:center;font-size:14px;color:#fff;transition:background .15s,border-color .15s}
+.taskitem.done .checkbox{background:var(--green);border-color:var(--green)}
+.tasklabel{font-size:14px;font-weight:600;color:var(--ink);flex:1}
+.taskitem.done .tasklabel{color:var(--muted);text-decoration:line-through;text-decoration-color:#9bcfcf}
+
+.emptystate{text-align:center;padding:40px 20px;color:var(--muted)}
+.emptystate .big{font-size:32px;margin-bottom:8px}
+
+.resetnote{display:flex;align-items:center;gap:8px;background:#EEF2F6;border:1px solid var(--line);color:var(--muted);border-radius:11px;padding:10px 14px;margin-top:14px;font-size:12px;font-weight:600}
+footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}
+
+.editbar{display:flex;justify-content:flex-end;margin-top:14px}
+.btn{font-family:inherit;font-weight:700;font-size:12.5px;border:1.5px solid var(--line);background:#fff;color:var(--navy);border-radius:9px;padding:8px 13px;cursor:pointer}
+.btn:hover{border-color:var(--green);color:var(--green)}
+.btn.danger:hover{border-color:#D9622E;color:#D9622E}
+
+.modal{position:fixed;inset:0;background:rgba(11,44,77,.45);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}
+.modal.open{display:flex}
+.modalbox{background:#fff;border-radius:18px;padding:22px;max-width:420px;width:100%;max-height:85vh;overflow-y:auto}
+.modalbox h3{font-size:16px;font-weight:800;color:var(--navy);margin-bottom:4px}
+.modalbox p{font-size:12.5px;color:var(--muted);margin-bottom:14px}
+.modalbox input[type=password]{width:100%;font-family:inherit;font-size:15px;border:1.5px solid var(--line);border-radius:10px;padding:11px 14px;margin-bottom:14px}
+.modalbox input[type=password]:focus{outline:2px solid var(--green);border-color:var(--green)}
+.modalrow{display:flex;gap:8px;justify-content:flex-end}
+.editrow{display:flex;gap:8px;align-items:center;margin-bottom:9px}
+.editrow input[type=text]{flex:1;font-family:inherit;font-size:13.5px;border:1.5px solid var(--line);border-radius:9px;padding:9px 12px}
+.editrow input[type=text]:focus{outline:2px solid var(--green);border-color:var(--green)}
+.iconbtn{width:32px;height:32px;border-radius:8px;border:1.5px solid var(--line);background:#fff;flex:none;cursor:pointer;font-size:14px;color:var(--muted)}
+.iconbtn:hover{border-color:#D9622E;color:#D9622E}
+.addrow{margin-top:10px}
+</style>
+</head>
+<body>
+<header><div class="hd">
+  <div class="brand"><div class="crest"><span>SGH</span></div>
+    <div><h1>Daily Tasks</h1><p>Saudi German Hospital — Hail Pharmacy</p></div></div>
+  <div style="display:flex;align-items:center;gap:16px">
+    <a class="backlink" href="index.html">← Portal</a>
+    <div class="livetag" id="liveTag"><span class="livedot"></span> Live</div>
+  </div>
+</div></header>
+
+<div class="wrap">
+  <div class="deptrow" id="deptRow"></div>
+
+  <div class="progresscard" id="progressCard" style="display:none">
+    <div class="progresshead">
+      <h3 id="progressTitle">—</h3>
+      <span class="pct" id="progressPct">0%</span>
+    </div>
+    <div class="bar"><div class="barfill" id="progressBar" style="width:0%"></div></div>
+    <div class="progressmeta"><span id="progressCount">0 of 0 done</span><span id="todayDate"></span></div>
+  </div>
+
+  <div class="tasklist" id="taskList"></div>
+
+  <div class="resetnote" id="resetNote" style="display:none">
+    🔄 Resets automatically every day at midnight (Riyadh time)
+  </div>
+
+  <div class="editbar" id="editBar" style="display:none">
+    <button class="btn" onclick="openEditModal()">✎ Edit task list</button>
+  </div>
+
+  <footer>Tap a task to mark it done · Synced live across all devices · Saudi German Hospital Pharmacy, Hail</footer>
+  <footer style="margin-top:4px;font-weight:700;color:var(--navy)">Made by Dr.Yazeed Alsomair</footer>
+</div>
+
+<!-- PIN modal -->
+<div class="modal" id="pinModal">
+  <div class="modalbox">
+    <h3>Edit task list</h3>
+    <p>Enter PIN to edit tasks for this department.</p>
+    <input type="password" id="pinInput" inputmode="numeric" placeholder="PIN" maxlength="6">
+    <div class="modalrow">
+      <button class="btn" onclick="closePinModal()">Cancel</button>
+      <button class="btn" style="border-color:var(--green);color:var(--green)" onclick="checkPin()">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit list modal -->
+<div class="modal" id="editModal">
+  <div class="modalbox">
+    <h3 id="editModalTitle">Edit tasks</h3>
+    <p>Add, rename, or remove tasks for this department. Changes apply to everyone immediately.</p>
+    <div id="editRows"></div>
+    <div class="addrow">
+      <button class="btn" onclick="addEditRow()">+ Add task</button>
+    </div>
+    <div class="modalrow" style="margin-top:16px">
+      <button class="btn" onclick="closeEditModal()">Cancel</button>
+      <button class="btn" style="border-color:var(--green);color:var(--green)" onclick="saveEditedTasks()">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBbEccCT3NRneb_UWstMv0GYaXvrvms0OE",
+  authDomain: "pharmcy-sgh.firebaseapp.com",
+  projectId: "pharmcy-sgh",
+  storageBucket: "pharmcy-sgh.firebasestorage.app",
+  messagingSenderId: "22468578998",
+  appId: "1:22468578998:web:6c77d9f128764cd6a56017"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+const EDIT_PIN = "2580"; // same PIN as the schedule editor
+
+const DEPTS = {
+  OUT:      { label: "Outpatient",  icon: "🏪" },
+  IN:       { label: "Inpatient",   icon: "🏥" },
+  NARCOTIC: { label: "Narcotic",    icon: "🔒" },
+  IV:       { label: "IV" ,         icon: "💧" }
+};
+
+// Default task lists — seeded once per department if none exist yet in Firestore.
+const DEFAULT_TASKS = {
+  OUT: [
+    "Review pending prescriptions from the morning",
+    "Check near-expiry medications",
+    "Restock shortages from main store",
+    "Submit daily dispensing report"
+  ],
+  IN: [
+    "Review pending ward requests",
+    "Count High Alert medications",
+    "Update shortage list",
+    "Shift handover notes"
+  ],
+  NARCOTIC: [
+    "Reconcile Raqib (CDS) log with physical count",
+    "Document daily dispensing with dual signature",
+    "End-of-shift inventory count",
+    "Confirm safe is locked and documented"
+  ],
+  IV: [
+    "Clean & disinfect Ante-room / Clean Room (per USP <797>)",
+    "Verify LAFW and Automated Compounder performance",
+    "Review BUD for solutions prepared this shift",
+    "Check sterile compounding supplies (PPE, syringes, bags)"
+  ]
+};
+
+let currentDept = null;
+let unsub = null;
+let liveDoc = null; // current Firestore doc data for the active dept
+
+function riyadhTodayKey(){
+  // Build today's date key from the absolute UTC timestamp shifted by +3h,
+  // independent of the device's own local timezone (fixes staff opening this
+  // from a phone set to a non-Riyadh timezone).
+  const now = new Date();
+  const riyadhMs = now.getTime() + 3*60*60000; // shift UTC instant by +3h
+  const riyadh = new Date(riyadhMs);
+  const y = riyadh.getUTCFullYear();
+  const m = String(riyadh.getUTCMonth()+1).padStart(2,"0");
+  const d = String(riyadh.getUTCDate()).padStart(2,"0");
+  return `${y}-${m}-${d}`;
+}
+
+function fmtDateLabel(){
+  const now = new Date();
+  return now.toLocaleDateString("en-GB",{weekday:"long", day:"2-digit", month:"short"});
+}
+
+function docRef(dept){
+  return db.collection("dailyTasks").doc(dept);
+}
+
+function renderDeptButtons(){
+  const row = document.getElementById("deptRow");
+  row.innerHTML = "";
+  Object.keys(DEPTS).forEach(key=>{
+    const meta = DEPTS[key];
+    const btn = document.createElement("button");
+    btn.className = "deptbtn " + key + (currentDept===key ? " active":"");
+    btn.innerHTML = `<span class="ic">${meta.icon}</span>${meta.label}`;
+    btn.onclick = () => selectDept(key);
+    row.appendChild(btn);
+  });
+}
+
+function selectDept(key){
+  currentDept = key;
+  renderDeptButtons();
+  document.getElementById("progressCard").style.display = "block";
+  document.getElementById("resetNote").style.display = "flex";
+  document.getElementById("editBar").style.display = "flex";
+  document.getElementById("progressTitle").textContent = DEPTS[key].label + " — Today's Tasks";
+  document.getElementById("todayDate").textContent = fmtDateLabel();
+
+  if (unsub) unsub();
+  unsub = docRef(key).onSnapshot(
+    (snap)=>{
+      let data = snap.exists ? snap.data() : null;
+      const todayKey = riyadhTodayKey();
+
+      if (!data || !Array.isArray(data.tasks) || data.tasks.length===0){
+        // Seed defaults for this department the first time it's opened.
+        const seeded = {
+          tasks: DEFAULT_TASKS[key].map((label, i) => ({ id: key+"_"+i, label })),
+          dateKey: todayKey,
+          done: {}
+        };
+        docRef(key).set(seeded);
+        return; // onSnapshot will fire again with the seeded data
+      }
+
+      // Auto-reset: if stored dateKey is not today, clear all done states.
+      if (data.dateKey !== todayKey){
+        docRef(key).set({ tasks: data.tasks, dateKey: todayKey, done: {} });
+        return;
+      }
+
+      liveDoc = data;
+      renderTaskList(data);
+    },
+    (err)=>{
+      document.getElementById("taskList").innerHTML =
+        `<div class="emptystate"><div class="big">⚠️</div>Couldn't reach the live task list.<br>Check your connection.</div>`;
+      console.error(err);
+    }
+  );
+}
+
+function renderTaskList(data){
+  const list = document.getElementById("taskList");
+  const tasks = data.tasks || [];
+  const done = data.done || {};
+
+  if (tasks.length===0){
+    list.innerHTML = `<div class="emptystate"><div class="big">📋</div>No tasks set for this department yet.</div>`;
+    updateProgress(0,0);
+    return;
+  }
+
+  list.innerHTML = tasks.map(t => {
+    const isDone = !!done[t.id];
+    return `<div class="taskitem ${isDone?'done':''}" onclick="toggleTask('${t.id}')">
+      <div class="checkbox">${isDone?'✓':''}</div>
+      <div class="tasklabel">${escapeHtml(t.label)}</div>
+    </div>`;
+  }).join("");
+
+  const doneCount = tasks.filter(t=>done[t.id]).length;
+  updateProgress(doneCount, tasks.length);
+}
+
+function updateProgress(doneCount, total){
+  const pct = total===0 ? 0 : Math.round((doneCount/total)*100);
+  document.getElementById("progressBar").style.width = pct + "%";
+  document.getElementById("progressPct").textContent = pct + "%";
+  document.getElementById("progressCount").textContent = `${doneCount} of ${total} done`;
+}
+
+function toggleTask(taskId){
+  if (!liveDoc || !currentDept) return;
+  const done = { ...(liveDoc.done || {}) };
+  done[taskId] = !done[taskId];
+  docRef(currentDept).update({ done });
+}
+
+function escapeHtml(str){
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ---------- PIN-protected editing ----------
+let pendingEditDept = null;
+
+function openEditModal(){
+  pendingEditDept = currentDept;
+  document.getElementById("pinInput").value = "";
+  document.getElementById("pinModal").classList.add("open");
+  setTimeout(()=>document.getElementById("pinInput").focus(), 50);
+}
+function closePinModal(){
+  document.getElementById("pinModal").classList.remove("open");
+}
+function checkPin(){
+  const val = document.getElementById("pinInput").value;
+  if (val === EDIT_PIN){
+    closePinModal();
+    showEditModal();
+  } else {
+    const input = document.getElementById("pinInput");
+    input.style.borderColor = "#D9622E";
+    input.value = "";
+    input.placeholder = "Incorrect PIN";
+    setTimeout(()=>{ input.style.borderColor=""; input.placeholder="PIN"; }, 1200);
+  }
+}
+
+let editRowsState = [];
+
+function showEditModal(){
+  document.getElementById("editModalTitle").textContent = "Edit tasks — " + DEPTS[pendingEditDept].label;
+  editRowsState = (liveDoc?.tasks || []).map(t => ({...t}));
+  renderEditRows();
+  document.getElementById("editModal").classList.add("open");
+}
+function closeEditModal(){
+  document.getElementById("editModal").classList.remove("open");
+}
+function renderEditRows(){
+  const container = document.getElementById("editRows");
+  container.innerHTML = "";
+  editRowsState.forEach((t, idx) => {
+    const row = document.createElement("div");
+    row.className = "editrow";
+    row.innerHTML = `
+      <input type="text" value="${escapeHtml(t.label)}" data-idx="${idx}">
+      <button class="iconbtn" onclick="removeEditRow(${idx})">✕</button>`;
+    container.appendChild(row);
+  });
+  container.querySelectorAll("input").forEach(inp=>{
+    inp.addEventListener("input", e=>{
+      editRowsState[+e.target.dataset.idx].label = e.target.value;
+    });
+  });
+}
+function addEditRow(){
+  editRowsState.push({ id: pendingEditDept + "_" + Date.now(), label: "" });
+  renderEditRows();
+  const inputs = document.querySelectorAll("#editRows input");
+  if (inputs.length) inputs[inputs.length-1].focus();
+}
+function removeEditRow(idx){
+  editRowsState.splice(idx,1);
+  renderEditRows();
+}
+function saveEditedTasks(){
+  const cleaned = editRowsState
+    .map(t => ({ id: t.id, label: (t.label||"").trim() }))
+    .filter(t => t.label.length>0);
+
+  const currentDone = liveDoc?.done || {};
+  const validIds = new Set(cleaned.map(t=>t.id));
+  const trimmedDone = {};
+  Object.keys(currentDone).forEach(id => { if (validIds.has(id)) trimmedDone[id] = currentDone[id]; });
+
+  docRef(pendingEditDept).set({
+    tasks: cleaned,
+    dateKey: riyadhTodayKey(),
+    done: trimmedDone
+  });
+  closeEditModal();
+}
+
+// Init
+renderDeptButtons();
+</script>
+</body>
+</html>
