@@ -419,6 +419,12 @@ footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}
       <div id="deptStatsContent"><div class="emptystate"><div class="big">⏳</div>Loading…</div></div>
     </div>
 
+    <div class="stats-card">
+      <h3>🔄 Daily Tasks — Monthly Completion</h3>
+      <p style="font-size:12px;color:var(--muted);margin:-8px 0 4px">How often each recurring task was completed across the month's tracked days.</p>
+      <div id="taskMonthlyContent"><div class="emptystate"><div class="big">⏳</div>Loading…</div></div>
+    </div>
+
     <footer style="margin-top:22px">Saudi German Hospital Pharmacy, Hail</footer>
     <footer style="margin-top:4px;font-weight:700;color:var(--navy)">Made by Dr.Yazeed Alsomair</footer>
   </div>
@@ -754,8 +760,18 @@ function saveHistory(dept, data) {
   const done = tasks.filter(t=>t.status==="completed").length;
   const over = tasks.filter(t=>effectiveStatus(t)==="overdue").length;
   const dk = data.dateKey||riyadhKey();
-  histRef(dept,dk).set({dept, dateKey:dk, total:tasks.length, completed:done, overdue:over})
-    .catch(()=>{});
+  // Per-task snapshot — enables monthly completion tracking per task.
+  const taskSnap = tasks.map(t=>({
+    id: t.id,
+    label: t.label,
+    recurrence: t.recurrence || "once",
+    done: t.status === "completed"
+  }));
+  histRef(dept,dk).set({
+    dept, dateKey:dk,
+    total:tasks.length, completed:done, overdue:over,
+    tasks: taskSnap
+  }).catch(()=>{});
 }
 
 /* ===== RENDER TASKS ===== */
@@ -1128,6 +1144,7 @@ async function loadStats() {
   const ym=document.getElementById("monthSel").value;
   document.getElementById("statsContent").innerHTML='<div class="emptystate"><div class="big">⏳</div>Loading…</div>';
   document.getElementById("deptStatsContent").innerHTML='<div class="emptystate"><div class="big">⏳</div>Loading…</div>';
+  document.getElementById("taskMonthlyContent").innerHTML='<div class="emptystate"><div class="big">⏳</div>Loading…</div>';
   try {
     const snap=await db.collection("taskHistory")
       .where("dateKey",">=",ym+"-01")
@@ -1135,7 +1152,8 @@ async function loadStats() {
     const recs=[]; snap.forEach(d=>recs.push(d.data()));
     if (!recs.length) {
       document.getElementById("statsContent").innerHTML='<div class="emptystate"><div class="big">📭</div>No data for this month yet.</div>';
-      document.getElementById("deptStatsContent").innerHTML=""; return;
+      document.getElementById("deptStatsContent").innerHTML="";
+      document.getElementById("taskMonthlyContent").innerHTML='<div class="emptystate"><div class="big">📭</div>No recurring-task data yet.</div>'; return;
     }
     const totT=recs.reduce((s,r)=>s+(r.total||0),0);
     const totD=recs.reduce((s,r)=>s+(r.completed||0),0);
@@ -1168,8 +1186,54 @@ async function loadStats() {
           </tr>`;
         }).join("")}</tbody>
       </table>`;
+
+    // ---- Per-task monthly completion (recurring tasks) ----
+    // Aggregate by dept → task id, counting tracked days and done days.
+    const perDept = {};
+    recs.forEach(r=>{
+      if(!Array.isArray(r.tasks)) return;
+      const dept = r.dept;
+      perDept[dept] = perDept[dept] || {};
+      r.tasks.forEach(ts=>{
+        const rec = ts.recurrence || "once";
+        if(rec === "once") return; // only show recurring (daily/monthly) tasks
+        const key = ts.id || ts.label;
+        if(!perDept[dept][key]) perDept[dept][key] = {label:ts.label, rec, trackedDays:0, doneDays:0};
+        perDept[dept][key].trackedDays++;
+        if(ts.done) perDept[dept][key].doneDays++;
+        perDept[dept][key].label = ts.label; // keep latest label
+      });
+    });
+
+    const sections = Object.keys(DEPTS).map(dk=>{
+      const tasksMap = perDept[dk];
+      if(!tasksMap || !Object.keys(tasksMap).length) return "";
+      const rows = Object.values(tasksMap)
+        .sort((a,b)=>(b.doneDays/b.trackedDays)-(a.doneDays/a.trackedDays))
+        .map(t=>{
+          const pct = t.trackedDays?Math.round(t.doneDays/t.trackedDays*100):0;
+          const col = pct>=80?"var(--p-low)":pct>=50?"var(--p-high)":"var(--p-urg)";
+          const recIcon = t.rec==="daily"?"🔄":"📆";
+          return `<tr>
+            <td style="font-weight:600">${recIcon} ${esc(t.label)}</td>
+            <td style="text-align:center;font-weight:700;color:${col}">${t.doneDays}/${t.trackedDays}</td>
+            <td><div class="mbar-wrap"><div class="mbar"><div class="mbar-fill" style="width:${pct}%;background:${col}"></div></div><span style="font-size:12px;font-weight:800;min-width:38px;color:${col}">${pct}%</span></div></td>
+          </tr>`;
+        }).join("");
+      return `<div style="margin-bottom:18px">
+        <div style="font-size:13px;font-weight:800;color:${DEPTS[dk].color};margin-bottom:6px">${DEPTS[dk].icon} ${DEPTS[dk].label}</div>
+        <table class="stats-tbl">
+          <thead><tr><th>Task</th><th style="text-align:center">Days</th><th>Completion</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+    }).filter(Boolean).join("");
+
+    document.getElementById("taskMonthlyContent").innerHTML = sections ||
+      '<div class="emptystate"><div class="big">📭</div>No recurring (daily/monthly) tasks tracked yet.</div>';
   } catch(e) {
     document.getElementById("statsContent").innerHTML='<div class="emptystate"><div class="big">⚠️</div>Failed to load statistics.</div>';
+    document.getElementById("taskMonthlyContent").innerHTML='<div class="emptystate"><div class="big">⚠️</div>Failed to load.</div>';
     console.error(e);
   }
 }
