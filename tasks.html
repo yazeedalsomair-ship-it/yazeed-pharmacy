@@ -1041,6 +1041,42 @@ async function loadStats() {
   }
 }
 
+/* ===== ULTRAMSG WHATSAPP ===== */
+const WA_INSTANCE = "instance182712";
+const WA_TOKEN    = "u4s8ptqcsatawy05";
+const WA_TO       = "966551286888@c.us";
+
+function formatWAMessage(type, msg, dept) {
+  const icons = { overdue:"⚠️", urgent:"🚨", reminder:"⏰", summary:"📋" };
+  const labels = { overdue:"متأخرة (Overdue)", urgent:"عاجلة (Urgent)", reminder:"تذكير", summary:"ملخص" };
+  const deptLabel = dept ? DEPTS[dept]?.label : "General";
+  const now = new Date().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+  return `${icons[type]||"🔔"} *تنبيه — SGH Pharmacy*
+━━━━━━━━━━━━━━━━━━━
+🏥 *القسم:* ${deptLabel}
+📋 *المهمة:* ${msg}
+⚠️ *الحالة:* ${labels[type]||type}
+⏰ *الوقت:* ${now}
+━━━━━━━━━━━━━━━━━━━
+_Saudi German Hospital — Hail Pharmacy_`;
+}
+
+async function sendWhatsApp(type, msg, dept) {
+  try {
+    const body = new URLSearchParams({
+      token:    WA_TOKEN,
+      to:       WA_TO,
+      body:     formatWAMessage(type, msg, dept),
+      priority: "10"
+    });
+    await fetch(`https://api.ultramsg.com/${WA_INSTANCE}/messages/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body
+    });
+  } catch(e) { console.warn("WhatsApp send failed:", e); }
+}
+
 /* ===== ONESIGNAL ===== */
 const OS_APP_ID  = "b93dd12a-4a8a-4e84-93fa-6196b03664aa";
 const OS_API_KEY = atob("b3NfdjJfYXBwX3hlNjVja3NrcmpoaWplNzJtZ2xsYW50ZXZrMzJmb2E2ZG1idW00dTR3eTVsNzdxNnlvajRrem1ieHViY2NrYWNlcXk0NnliNm55aG9qcTJsanNldGFtYzMyc3ZmdXZteGJoYnNjb3E=");
@@ -1240,6 +1276,11 @@ function fireNotif(type, msg, dept, taskId){
   // OneSignal push → all subscribed pharmacists
   if(NS.enabled && (type==='overdue'||type==='urgent'||type==='reminder')){
     sendPushToAll(`${N_ICONS[type]} ${N_TITLES[type]}`, msg, dept);
+  }
+
+  // WhatsApp via UltraMsg → pharmacy group
+  if(type==='overdue'||type==='urgent'){
+    sendWhatsApp(type, msg, dept);
   }
 
   // In-app
