@@ -1049,12 +1049,11 @@ window.OneSignalDeferred = window.OneSignalDeferred || [];
 OneSignalDeferred.push(async function(OneSignal) {
   await OneSignal.init({
     appId: OS_APP_ID,
-    serviceWorkerPath: "OneSignalSDKWorker.js",
-    serviceWorkerParam: { scope: "/yazeed-pharmacy/" },
     notifyButton: { enable: false },
+    allowLocalhostAsSecureOrigin: true,
   });
 
-  const opted = await OneSignal.User.PushSubscription.optedIn;
+  const opted = OneSignal.User.PushSubscription.optedIn;
   if (!opted && !localStorage.getItem("sgh_push_dismissed")) {
     document.getElementById("pushBanner").classList.remove("hidden");
   }
@@ -1068,7 +1067,7 @@ OneSignalDeferred.push(async function(OneSignal) {
 
 async function subscribePush() {
   OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.User.PushSubscription.optIn();
+    await OneSignal.Notifications.requestPermission();
     document.getElementById("pushBanner").classList.add("hidden");
   });
 }
