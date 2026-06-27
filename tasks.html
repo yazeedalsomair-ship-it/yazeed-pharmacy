@@ -249,6 +249,8 @@ footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}
 .deadline-badge.overdue-badge{background:#FBE4DC;color:#D9622E;font-weight:800;animation:pulse-warn 1.5s infinite}
 @keyframes pulse-warn{0%,100%{opacity:1}50%{opacity:.6}}
 .countdown{font-family:monospace;font-weight:800}
+.badge.rec-daily{background:#E4E2F4;color:#5247A8}
+.badge.rec-monthly{background:#DEEBFB;color:#2F77C7}
 
 /* PROGRESS SECTION */
 .progress-section{background:var(--bg);border-radius:12px;padding:14px;margin-top:16px}
@@ -476,13 +478,26 @@ footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}
     </div>
 
     <div class="fgrow">
-      <div class="fg"><label>⏰ Deadline (Time)</label>
-        <input type="time" id="f-deadline" placeholder="14:30">
+      <div class="fg"><label>📅 Deadline Date</label>
+        <input type="date" id="f-deadlineDate">
       </div>
-      <div class="fg"><label>🔴 Mark as Urgent</label>
+      <div class="fg"><label>⏰ Deadline Time</label>
+        <input type="time" id="f-deadline">
+      </div>
+    </div>
+
+    <div class="fgrow">
+      <div class="fg"><label>🔄 Task Recurrence</label>
+        <select id="f-recurrence">
+          <option value="once">One-time (لمرة واحدة)</option>
+          <option value="daily">Daily (تتجدد يومياً)</option>
+          <option value="monthly">Monthly (شهرية)</option>
+        </select>
+      </div>
+      <div class="fg"><label>🔴 Urgent Direct Alert</label>
         <div style="display:flex;align-items:center;gap:10px;margin-top:8px">
           <label class="toggle"><input type="checkbox" id="f-urgent-direct" onchange="toggleUrgentDirect()"><span class="toggle-track"></span></label>
-          <span style="font-size:11.5px;color:var(--muted)">Send direct message to group</span>
+          <span style="font-size:11.5px;color:var(--muted)">Send to WhatsApp group</span>
         </div>
       </div>
     </div>
@@ -599,6 +614,9 @@ function riyadhKey() {
   const d = new Date(ms);
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,"0")}-${String(d.getUTCDate()).padStart(2,"0")}`;
 }
+function riyadhMonthKey() {
+  return riyadhKey().slice(0,7); // YYYY-MM
+}
 function fmtDate() {
   return new Date().toLocaleDateString("en-GB",{weekday:"long",day:"2-digit",month:"short"});
 }
@@ -614,20 +632,27 @@ function effectiveStatus(t) {
   return t.status || "pending";
 }
 
-function formatCountdown(dueDate, deadline) {
-  if (!dueDate) return null;
-  const today = riyadhKey();
-  const [y,m,d] = dueDate.split("-").map(Number);
-  const dueTime = deadline ? deadline.split(":").map(Number) : [23,59];
-  const due = new Date(y, m-1, d, dueTime[0], dueTime[1], 0);
+function formatCountdown(t) {
+  // Deadline date takes precedence; fall back to dueDate.
+  const dlDate = t.deadlineDate || t.dueDate;
+  if (!dlDate) return null;
+  const [y,m,d] = dlDate.split("-").map(Number);
+  const dlTime = t.deadline ? t.deadline.split(":").map(Number) : [23,59];
+  const due = new Date(y, m-1, d, dlTime[0], dlTime[1], 0);
   const now = new Date();
   const diff = due - now;
 
-  if (diff < 0) return {label:"⏰ OVERDUE", cls:"overdue-badge"};
-  if (diff < 3600000) return {label:`⏰ ${Math.ceil(diff/60000)}min`, cls:"urgent-soon"};
-  if (diff < 86400000) return {label:`⏰ ${Math.floor(diff/3600000)}h`, cls:"urgent-soon"};
-  if (dueDate === today) return {label:"⏰ Today", cls:"warning"};
-  return {label:`📅 ${dueDate}`, cls:"safe"};
+  if (diff < 0) {
+    const od = Math.abs(diff);
+    if (od < 86400000) return {label:"⏰ OVERDUE", cls:"overdue-badge"};
+    return {label:`⏰ ${Math.floor(od/86400000)}d overdue`, cls:"overdue-badge"};
+  }
+  if (diff < 3600000) return {label:`⏰ ${Math.ceil(diff/60000)} min left`, cls:"urgent-soon"};
+  if (diff < 86400000) return {label:`⏰ ${Math.floor(diff/3600000)}h ${Math.floor((diff%3600000)/60000)}m left`, cls:"urgent-soon"};
+  const days = Math.floor(diff/86400000);
+  if (days <= 3) return {label:`⏰ ${days}d ${Math.floor((diff%86400000)/3600000)}h left`, cls:"warning"};
+  const timeLabel = t.deadline ? ` ${t.deadline}` : "";
+  return {label:`📅 ${dlDate}${timeLabel}`, cls:"safe"};
 }
 function dueFmt(ds) {
   if (!ds) return null;
@@ -697,11 +722,22 @@ function selectDept(key) {
       }));
       docRef(key).set({tasks:migrated, dateKey:data.dateKey||today}); return;
     }
-    // Daily reset
+    // Daily / monthly reset
     if (data.dateKey !== today) {
       saveHistory(key, data);
-      const reset = data.tasks.map(t=>({...t, status: t.status==="completed" ? "pending" : t.status}));
-      docRef(key).set({tasks:reset, dateKey:today}); return;
+      const thisMonth = riyadhMonthKey();
+      const storedMonth = data.monthKey || (data.dateKey||"").slice(0,7);
+      const monthChanged = storedMonth !== thisMonth;
+      const reset = data.tasks.map(t=>{
+        const rec = t.recurrence || "once";
+        // Monthly tasks keep their status across days; reset only at month start.
+        if (rec === "monthly") {
+          return monthChanged ? {...t, status:"pending"} : t;
+        }
+        // Daily & one-time tasks reset each new day.
+        return {...t, status: t.status==="completed" ? "pending" : t.status};
+      });
+      docRef(key).set({tasks:reset, dateKey:today, monthKey:thisMonth}); return;
     }
     liveDoc = data;
     renderTasks(data);
@@ -748,8 +784,10 @@ function renderTasks(data) {
             ${t.notes?`<span class="badge icon-only">📝</span>`:""}
             ${t.attachment?`<span class="badge icon-only">📎</span>`:""}
             ${t.urgentDirect?`<span class="badge icon-only">📢</span>`:""}
+            ${t.recurrence==="daily"?`<span class="badge rec-daily">🔄 Daily</span>`:""}
+            ${t.recurrence==="monthly"?`<span class="badge rec-monthly">📆 Monthly</span>`:""}
           </div>
-          ${formatCountdown(t.dueDate, t.deadline)?`<div class="deadline-badge ${formatCountdown(t.dueDate, t.deadline).cls}"><span class="countdown">${formatCountdown(t.dueDate, t.deadline).label}</span></div>`:""}
+          ${(()=>{const cd=formatCountdown(t);return cd?`<div class="deadline-badge ${cd.cls}"><span class="countdown">${cd.label}</span></div>`:"";})()}
         </div>
         <button class="expbtn" onclick="toggleDetail(event,'${t.id}')">▾</button>
       </div>
@@ -758,8 +796,10 @@ function renderTasks(data) {
           <div class="det-item"><div class="lbl">Priority</div><div class="val">${PRI_LABELS[t.priority||"medium"]}</div></div>
           <div class="det-item"><div class="lbl">Status</div><div class="val">${STA_LABELS[es]}</div></div>
           ${t.assignee?`<div class="det-item"><div class="lbl">Assignee</div><div class="val">👤 ${esc(t.assignee)}</div></div>`:""}
-          ${t.dueDate?`<div class="det-item"><div class="lbl">Due Date</div><div class="val">${t.dueDate}${t.deadline?' '+t.deadline:''}</div></div>`:""}
+          ${t.dueDate?`<div class="det-item"><div class="lbl">Due Date</div><div class="val">${t.dueDate}</div></div>`:""}
+          ${(t.deadlineDate||t.deadline)?`<div class="det-item"><div class="lbl">Deadline</div><div class="val">${t.deadlineDate||t.dueDate||''}${t.deadline?' '+t.deadline:''}</div></div>`:""}
           ${t.reminder?`<div class="det-item"><div class="lbl">Reminder</div><div class="val">⏰ ${t.reminder}</div></div>`:""}
+          ${t.recurrence&&t.recurrence!=="once"?`<div class="det-item"><div class="lbl">Recurrence</div><div class="val">${t.recurrence==="daily"?"🔄 Daily":"📆 Monthly"}</div></div>`:""}
           ${t.urgentDirect?`<div class="det-item"><div class="lbl">Direct Alert</div><div class="val">📢 Enabled</div></div>`:""}
         </div>
         ${t.notes?`<div class="notes-box">📝 ${esc(t.notes)}</div>`:""}
@@ -858,7 +898,9 @@ function openAddModal() {
   document.getElementById("f-status").value="pending";
   document.getElementById("f-assignee").value="";
   document.getElementById("f-dueDate").value=riyadhKey();
+  document.getElementById("f-deadlineDate").value="";
   document.getElementById("f-deadline").value="";
+  document.getElementById("f-recurrence").value="once";
   document.getElementById("f-reminder").value="";
   document.getElementById("f-notes").value="";
   document.getElementById("f-urgent-direct").checked=false;
@@ -880,7 +922,9 @@ function openEditTaskModal(id) {
   document.getElementById("f-status").value=t.status==="overdue"?"pending":(t.status||"pending");
   document.getElementById("f-assignee").value=t.assignee||"";
   document.getElementById("f-dueDate").value=t.dueDate||"";
+  document.getElementById("f-deadlineDate").value=t.deadlineDate||"";
   document.getElementById("f-deadline").value=t.deadline||"";
+  document.getElementById("f-recurrence").value=t.recurrence||"once";
   document.getElementById("f-reminder").value=t.reminder||"";
   document.getElementById("f-notes").value=t.notes||"";
   document.getElementById("f-urgent-direct").checked=t.urgentDirect||false;
@@ -930,7 +974,9 @@ function saveTask() {
     status: document.getElementById("f-status").value,
     assignee: document.getElementById("f-assignee").value.trim(),
     dueDate: document.getElementById("f-dueDate").value,
+    deadlineDate: document.getElementById("f-deadlineDate").value,
     deadline: document.getElementById("f-deadline").value,
+    recurrence: document.getElementById("f-recurrence").value,
     reminder: document.getElementById("f-reminder").value,
     notes: document.getElementById("f-notes").value.trim(),
     urgentDirect,
