@@ -197,6 +197,66 @@ footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}
 .mbar-wrap{display:flex;align-items:center;gap:8px}
 .mbar{flex:1;height:6px;background:var(--bg);border-radius:4px;overflow:hidden}
 .mbar-fill{height:100%;border-radius:4px}
+
+/* ===== NOTIFICATION SYSTEM ===== */
+.bell-btn{position:relative;background:rgba(255,255,255,.12);border:none;border-radius:10px;width:38px;height:38px;cursor:pointer;display:grid;place-items:center;font-size:18px;transition:background .15s}
+.bell-btn:hover{background:rgba(255,255,255,.22)}
+.bell-badge{position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;font-size:10px;font-weight:800;border-radius:20px;min-width:18px;height:18px;display:none;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--navy2)}
+.bell-badge.show{display:flex}
+@keyframes ring{0%,100%{transform:rotate(0)}20%{transform:rotate(-18deg)}40%{transform:rotate(18deg)}60%{transform:rotate(-12deg)}80%{transform:rotate(12deg)}}
+.bell-btn.ringing{animation:ring .6s ease}
+@keyframes urgentPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.5)}50%{box-shadow:0 0 0 10px rgba(239,68,68,0)}}
+.bell-btn.urgent{animation:urgentPulse 1.8s infinite}
+
+.notif-overlay{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.25);display:none;backdrop-filter:blur(2px)}
+.notif-overlay.open{display:block}
+.notif-panel{position:fixed;top:0;right:0;height:100dvh;width:370px;max-width:96vw;background:#fff;box-shadow:-6px 0 40px rgba(16,34,54,.18);z-index:91;display:flex;flex-direction:column;transform:translateX(102%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.notif-panel.open{transform:translateX(0)}
+.np-head{background:linear-gradient(120deg,var(--navy),var(--navy2));color:#fff;padding:18px 18px 14px;display:flex;align-items:center;justify-content:space-between;flex:none}
+.np-head h3{font-size:15px;font-weight:800}
+.np-head-actions{display:flex;gap:10px;align-items:center}
+.np-close{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;opacity:.7;line-height:1;padding:0}
+.np-close:hover{opacity:1}
+.np-mark{font-size:11px;font-weight:700;color:#bcd2e8;background:none;border:none;cursor:pointer;font-family:inherit}
+.np-mark:hover{color:#fff}
+.np-tabs{display:flex;background:#f8fafa;border-bottom:1px solid var(--line);flex:none}
+.np-tab{flex:1;padding:10px 6px;text-align:center;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;border:none;background:none;font-family:inherit;border-bottom:2.5px solid transparent;transition:color .15s,border-color .15s}
+.np-tab.active{color:var(--green);border-bottom-color:var(--green);background:#fff}
+.np-body{flex:1;overflow-y:auto;padding:10px}
+.np-empty{text-align:center;padding:40px 20px;color:var(--muted)}
+.np-empty .ne-icon{font-size:36px;margin-bottom:8px}
+
+.nitem{display:flex;gap:10px;padding:10px;border-radius:12px;margin-bottom:6px;position:relative;transition:background .12s}
+.nitem.unread{background:#f0fafa;border-left:3px solid var(--green)}
+.nitem:hover{background:#f4fafa}
+.ni-icon{font-size:18px;flex:none;width:38px;height:38px;border-radius:10px;display:grid;place-items:center}
+.ni-icon.t-reminder{background:#FFF3D6}
+.ni-icon.t-overdue{background:#FBE4DC}
+.ni-icon.t-urgent{background:#FBE4DC}
+.ni-icon.t-summary{background:#E2F4E8}
+.ni-icon.t-done{background:#E2F4E8}
+.ni-content{flex:1;min-width:0}
+.ni-dept{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);margin-bottom:2px}
+.ni-title{font-size:12.5px;font-weight:700;color:var(--ink)}
+.ni-body{font-size:11.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ni-time{font-size:10.5px;color:var(--muted);margin-top:3px}
+.ni-dismiss{position:absolute;top:6px;right:6px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;opacity:0;transition:opacity .12s;padding:2px}
+.nitem:hover .ni-dismiss{opacity:1}
+
+.ns-wrap{padding:14px}
+.ns-section{margin-bottom:18px}
+.ns-section-title{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.ns-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.ns-row:last-child{border-bottom:none}
+.ns-lbl{font-size:13px;font-weight:600;color:var(--ink)}
+.ns-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.toggle{position:relative;width:44px;height:24px;flex:none}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;background:#d0d8df;border-radius:20px;cursor:pointer;transition:background .2s}
+.toggle input:checked+.toggle-track{background:var(--green)}
+.toggle-track::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle input:checked+.toggle-track::after{transform:translateX(20px)}
+.ns-input{font-family:inherit;font-size:13px;border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;color:var(--ink);width:110px}
 </style>
 </head>
 <body>
@@ -207,12 +267,34 @@ footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}
       <div class="crest"><span>SGH</span></div>
       <div><h1>Daily Tasks</h1><p>Saudi German Hospital — Hail Pharmacy</p></div>
     </div>
-    <div style="display:flex;align-items:center;gap:16px">
+    <div style="display:flex;align-items:center;gap:12px">
       <a class="backlink" href="index.html">← Portal</a>
       <div class="livetag"><span class="livedot"></span> Live</div>
+      <button class="bell-btn" id="bellBtn" onclick="togglePanel()" title="Notifications">
+        🔔
+        <span class="bell-badge" id="bellBadge">0</span>
+      </button>
     </div>
   </div>
 </header>
+
+<!-- ===== NOTIFICATION PANEL ===== -->
+<div class="notif-overlay" id="notifOverlay" onclick="closePanel()"></div>
+<div class="notif-panel" id="notifPanel">
+  <div class="np-head">
+    <h3>🔔 Notifications</h3>
+    <div class="np-head-actions">
+      <button class="np-mark" onclick="markAllRead()">Mark all read</button>
+      <button class="np-close" onclick="closePanel()">✕</button>
+    </div>
+  </div>
+  <div class="np-tabs">
+    <button class="np-tab active" onclick="switchNTab('alerts')" id="ntab-alerts">Alerts</button>
+    <button class="np-tab" onclick="switchNTab('history')" id="ntab-history">History</button>
+    <button class="np-tab" onclick="switchNTab('settings')" id="ntab-settings">⚙ Settings</button>
+  </div>
+  <div class="np-body" id="npBody"></div>
+</div>
 
 <div class="navwrap">
   <div class="navtabs">
@@ -938,6 +1020,302 @@ async function loadStats() {
   }
 }
 
+/* ===== NOTIFICATION ENGINE ===== */
+
+const N_ICONS = { reminder:'⏰', overdue:'⚠️', urgent:'🚨', summary:'📋', done:'✅' };
+const N_TITLES = { reminder:'Task Reminder', overdue:'Overdue Task', urgent:'Urgent Task!', summary:'Shift Summary', done:'Task Completed' };
+
+let nHistory = JSON.parse(localStorage.getItem('sgh_notif_history')||'[]');
+let nLastFired = JSON.parse(localStorage.getItem('sgh_notif_fired')||'{}');
+let nUnread = 0;
+let nActiveTab = 'alerts';
+let nEngineTimer = null;
+
+function defaultSettings(){
+  return {
+    enabled: true,
+    overdueEnabled: true,
+    urgentEnabled: true,
+    reminderEnabled: true,
+    summaryEnabled: true,
+    summaryTime: '08:00',
+    urgentInterval: 30,
+    overdueInterval: 60,
+    shiftDepts: ['OUT','IN','NARCOTIC','IV']
+  };
+}
+
+function loadNSettings(){
+  try { return {...defaultSettings(), ...JSON.parse(localStorage.getItem('sgh_notif_settings')||'{}')}; }
+  catch(e){ return defaultSettings(); }
+}
+function saveNSettings(s){ localStorage.setItem('sgh_notif_settings', JSON.stringify(s)); }
+
+let NS = loadNSettings();
+
+/* --- Panel UI --- */
+function togglePanel(){
+  const panel = document.getElementById('notifPanel');
+  const overlay = document.getElementById('notifOverlay');
+  const isOpen = panel.classList.contains('open');
+  if(isOpen){ closePanel(); }
+  else {
+    panel.classList.add('open');
+    overlay.classList.add('open');
+    renderNPanel();
+    markAllRead();
+  }
+}
+function closePanel(){
+  document.getElementById('notifPanel').classList.remove('open');
+  document.getElementById('notifOverlay').classList.remove('open');
+}
+function switchNTab(t){
+  nActiveTab = t;
+  document.querySelectorAll('.np-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('ntab-'+t).classList.add('active');
+  renderNPanel();
+}
+
+function renderNPanel(){
+  const body = document.getElementById('npBody');
+  if(nActiveTab === 'settings'){ body.innerHTML = renderSettings(); return; }
+  const list = nActiveTab === 'alerts'
+    ? nHistory.filter(n=>!n.dismissed)
+    : nHistory;
+  if(!list.length){
+    body.innerHTML = `<div class="np-empty"><div class="ne-icon">🔕</div><div>No notifications yet</div></div>`;
+    return;
+  }
+  body.innerHTML = list.slice(0,60).map(n=>`
+    <div class="nitem ${n.read?'':'unread'}" id="ni-${n.id}">
+      <div class="ni-icon t-${n.type}">${N_ICONS[n.type]||'🔔'}</div>
+      <div class="ni-content">
+        <div class="ni-dept">${n.dept?DEPTS[n.dept]?.label:''}</div>
+        <div class="ni-title">${N_TITLES[n.type]||'Notice'}</div>
+        <div class="ni-body">${esc(n.msg)}</div>
+        <div class="ni-time">${fmtAgo(n.ts)}</div>
+      </div>
+      <button class="ni-dismiss" onclick="dismissN(${n.id})" title="Dismiss">✕</button>
+    </div>`).join('');
+}
+
+function fmtAgo(ts){
+  const diff = Date.now()-ts;
+  if(diff<60000) return 'Just now';
+  if(diff<3600000) return Math.floor(diff/60000)+' min ago';
+  if(diff<86400000) return Math.floor(diff/3600000)+' hr ago';
+  return new Date(ts).toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+}
+
+function dismissN(id){
+  const n = nHistory.find(x=>x.id===id);
+  if(n) n.dismissed = true;
+  saveHistory2();
+  renderNPanel();
+}
+
+function markAllRead(){
+  nHistory.forEach(n=>n.read=true);
+  nUnread = 0;
+  updateBell();
+  saveHistory2();
+  renderNPanel();
+}
+
+function saveHistory2(){
+  localStorage.setItem('sgh_notif_history', JSON.stringify(nHistory.slice(0,100)));
+}
+
+function updateBell(){
+  const badge = document.getElementById('bellBadge');
+  const btn = document.getElementById('bellBtn');
+  const hasUrgent = nHistory.some(n=>!n.read && n.type==='urgent');
+  if(nUnread>0){
+    badge.textContent = nUnread>99?'99+':nUnread;
+    badge.classList.add('show');
+    btn.classList.toggle('urgent', hasUrgent);
+    if(!hasUrgent) btn.classList.remove('urgent');
+  } else {
+    badge.classList.remove('show');
+    btn.classList.remove('urgent');
+  }
+}
+
+/* --- Fire a notification --- */
+function fireNotif(type, msg, dept, taskId){
+  const key = `${type}_${taskId||msg}_${dept||''}`;
+  const interval = type==='urgent' ? NS.urgentInterval*60000
+                 : type==='overdue' ? NS.overdueInterval*60000
+                 : 86400000;
+  const last = nLastFired[key]||0;
+  if(Date.now()-last < interval) return;
+
+  // Browser notification
+  if(NS.enabled && Notification.permission==='granted'){
+    new Notification(`${N_ICONS[type]} SGH Pharmacy${dept?' — '+DEPTS[dept]?.label:''}`, {
+      body: msg, icon: '', tag: key, renotify: true
+    });
+  }
+
+  // In-app
+  const n = { id: Date.now()+Math.random(), type, msg, dept, ts: Date.now(), read: false, dismissed: false };
+  nHistory.unshift(n);
+  nUnread++;
+  nLastFired[key] = Date.now();
+  localStorage.setItem('sgh_notif_fired', JSON.stringify(nLastFired));
+  saveHistory2();
+  updateBell();
+
+  // Ring bell
+  const btn = document.getElementById('bellBtn');
+  btn.classList.remove('ringing');
+  void btn.offsetWidth;
+  btn.classList.add('ringing');
+  setTimeout(()=>btn.classList.remove('ringing'), 700);
+
+  if(document.getElementById('notifPanel').classList.contains('open')) renderNPanel();
+}
+
+/* --- Smart engine: runs every 60 seconds --- */
+async function runEngine(){
+  if(!NS.enabled) return;
+  const now = new Date();
+  const timeStr = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  const today = riyadhKey();
+
+  // Morning summary
+  if(NS.summaryEnabled && timeStr===NS.summaryTime){
+    const sumKey = 'summary_'+today;
+    if(!nLastFired[sumKey]){
+      let totalPending=0;
+      for(const k of Object.keys(DEPTS)){
+        try{
+          const snap = await docRef(k).get();
+          if(!snap.exists) continue;
+          const d = snap.data();
+          if(d.dateKey!==today) continue;
+          totalPending += (d.tasks||[]).filter(t=>effectiveStatus(t)!=='completed').length;
+        }catch(e){}
+      }
+      fireNotif('summary', `Good morning! You have ${totalPending} pending tasks today.`, null, sumKey);
+    }
+  }
+
+  // Per-department task checks
+  for(const dept of Object.keys(DEPTS)){
+    if(!NS.shiftDepts.includes(dept)) continue;
+    let data;
+    try{
+      const snap = await docRef(dept).get();
+      if(!snap.exists) continue;
+      data = snap.data();
+    }catch(e){ continue; }
+    if(!data||data.dateKey!==today) continue;
+
+    const tasks = data.tasks||[];
+    for(const t of tasks){
+      const es = effectiveStatus(t);
+      if(es==='completed') continue;
+
+      // Scheduled reminder (match within this minute)
+      if(NS.reminderEnabled && t.reminder && t.reminder===timeStr){
+        fireNotif('reminder', t.label, dept, t.id);
+      }
+      // Overdue
+      if(NS.overdueEnabled && es==='overdue'){
+        fireNotif('overdue', t.label, dept, t.id);
+      }
+      // Urgent not done
+      if(NS.urgentEnabled && t.priority==='urgent'){
+        fireNotif('urgent', t.label, dept, t.id);
+      }
+    }
+  }
+}
+
+function startEngine(){
+  if(nEngineTimer) clearInterval(nEngineTimer);
+  runEngine();
+  nEngineTimer = setInterval(runEngine, 60000);
+}
+
+/* --- Settings UI --- */
+function renderSettings(){
+  NS = loadNSettings();
+  return `<div class="ns-wrap">
+    <div class="ns-section">
+      <div class="ns-section-title">General</div>
+      <div class="ns-row">
+        <div><div class="ns-lbl">Enable Notifications</div><div class="ns-sub">Browser + in-app alerts</div></div>
+        <label class="toggle"><input type="checkbox" ${NS.enabled?'checked':''} onchange="updateNS('enabled',this.checked)"><span class="toggle-track"></span></label>
+      </div>
+    </div>
+    <div class="ns-section">
+      <div class="ns-section-title">Alert Types</div>
+      <div class="ns-row">
+        <div><div class="ns-lbl">⚠️ Overdue Tasks</div><div class="ns-sub">Every ${NS.overdueInterval} min</div></div>
+        <label class="toggle"><input type="checkbox" ${NS.overdueEnabled?'checked':''} onchange="updateNS('overdueEnabled',this.checked)"><span class="toggle-track"></span></label>
+      </div>
+      <div class="ns-row">
+        <div><div class="ns-lbl">🚨 Urgent Tasks</div><div class="ns-sub">Every ${NS.urgentInterval} min</div></div>
+        <label class="toggle"><input type="checkbox" ${NS.urgentEnabled?'checked':''} onchange="updateNS('urgentEnabled',this.checked)"><span class="toggle-track"></span></label>
+      </div>
+      <div class="ns-row">
+        <div><div class="ns-lbl">⏰ Scheduled Reminders</div><div class="ns-sub">At task reminder time</div></div>
+        <label class="toggle"><input type="checkbox" ${NS.reminderEnabled?'checked':''} onchange="updateNS('reminderEnabled',this.checked)"><span class="toggle-track"></span></label>
+      </div>
+      <div class="ns-row">
+        <div><div class="ns-lbl">📋 Morning Summary</div><div class="ns-sub">Daily task overview</div></div>
+        <label class="toggle"><input type="checkbox" ${NS.summaryEnabled?'checked':''} onchange="updateNS('summaryEnabled',this.checked)"><span class="toggle-track"></span></label>
+      </div>
+    </div>
+    <div class="ns-section">
+      <div class="ns-section-title">Schedule</div>
+      <div class="ns-row">
+        <div><div class="ns-lbl">Morning Summary Time</div></div>
+        <input class="ns-input" type="time" value="${NS.summaryTime}" onchange="updateNS('summaryTime',this.value)">
+      </div>
+      <div class="ns-row">
+        <div><div class="ns-lbl">Urgent repeat (min)</div></div>
+        <input class="ns-input" type="number" min="5" max="120" value="${NS.urgentInterval}" onchange="updateNS('urgentInterval',+this.value)" style="width:80px">
+      </div>
+      <div class="ns-row">
+        <div><div class="ns-lbl">Overdue repeat (min)</div></div>
+        <input class="ns-input" type="number" min="15" max="240" value="${NS.overdueInterval}" onchange="updateNS('overdueInterval',+this.value)" style="width:80px">
+      </div>
+    </div>
+    <div class="ns-section">
+      <div class="ns-section-title">Departments to Monitor</div>
+      ${Object.keys(DEPTS).map(k=>`
+      <div class="ns-row">
+        <div><div class="ns-lbl">${DEPTS[k].icon} ${DEPTS[k].label}</div></div>
+        <label class="toggle"><input type="checkbox" ${NS.shiftDepts.includes(k)?'checked':''} onchange="toggleDept('${k}',this.checked)"><span class="toggle-track"></span></label>
+      </div>`).join('')}
+    </div>
+    <button onclick="clearAllNotifs()" style="width:100%;font-family:inherit;font-size:12.5px;font-weight:700;border:1.5px solid var(--line);background:#fff;color:var(--muted);border-radius:9px;padding:9px;cursor:pointer;margin-top:4px">🗑 Clear notification history</button>
+  </div>`;
+}
+
+function updateNS(key, val){
+  NS[key] = val;
+  saveNSettings(NS);
+  if(document.getElementById('notifPanel').classList.contains('open')) renderNPanel();
+}
+function toggleDept(dept, checked){
+  NS.shiftDepts = checked
+    ? [...new Set([...NS.shiftDepts, dept])]
+    : NS.shiftDepts.filter(d=>d!==dept);
+  saveNSettings(NS);
+}
+function clearAllNotifs(){
+  nHistory=[];nUnread=0;nLastFired={};
+  saveHistory2();
+  localStorage.setItem('sgh_notif_fired','{}');
+  updateBell();
+  renderNPanel();
+}
+
 /* ===== KEYBOARD / CLOSE ===== */
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") document.querySelectorAll(".modal.open").forEach(m=>m.classList.remove("open")); });
 document.querySelectorAll(".modal").forEach(m=>m.addEventListener("click",e=>{ if(e.target===m) m.classList.remove("open"); }));
@@ -946,7 +1324,21 @@ document.getElementById("pinInput").addEventListener("keydown",e=>{ if(e.key==="
 /* ===== INIT ===== */
 renderDeptBtns();
 document.getElementById("todayDate").textContent = fmtDate();
-if ("Notification" in window && Notification.permission==="default") Notification.requestPermission();
+
+if ("Notification" in window) {
+  if (Notification.permission === "default") {
+    Notification.requestPermission().then(p => { if (p==="granted") startEngine(); });
+  } else if (Notification.permission === "granted") {
+    startEngine();
+  }
+}
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
+
+nUnread = nHistory.filter(n => !n.read).length;
+updateBell();
 </script>
 </body>
 </html>
