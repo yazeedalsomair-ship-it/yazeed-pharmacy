@@ -8,7 +8,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <style>
 :root {
   --navy:#1a2332; --navy2:#22324a; --green:#2d8b8b; --green2:#22a866;
@@ -241,6 +240,24 @@ footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}
 .ni-title{font-size:12.5px;font-weight:700;color:var(--ink)}
 .ni-body{font-size:11.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ni-time{font-size:10.5px;color:var(--muted);margin-top:3px}
+
+/* DEADLINE + COUNTDOWN */
+.deadline-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:18px;margin-top:6px}
+.deadline-badge.urgent-soon{background:#FBE4DC;color:#D9622E}
+.deadline-badge.warning{background:#FFF3D6;color:#E8A317}
+.deadline-badge.safe{background:#E2F4E8;color:#28A75C}
+.deadline-badge.overdue-badge{background:#FBE4DC;color:#D9622E;font-weight:800;animation:pulse-warn 1.5s infinite}
+@keyframes pulse-warn{0%,100%{opacity:1}50%{opacity:.6}}
+.countdown{font-family:monospace;font-weight:800}
+
+/* PROGRESS SECTION */
+.progress-section{background:var(--bg);border-radius:12px;padding:14px;margin-top:16px}
+.progress-section h4{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:10px}
+.progress-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px}
+.progress-stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center}
+.ps-label{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase}
+.ps-value{font-size:24px;font-weight:800;color:var(--navy);margin-top:4px}
+.ps-unit{font-size:11px;color:var(--green);font-weight:600}
 .ni-dismiss{position:absolute;top:6px;right:6px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;opacity:0;transition:opacity .12s;padding:2px}
 .nitem:hover .ni-dismiss{opacity:1}
 
@@ -259,16 +276,6 @@ footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}
 .toggle input:checked+.toggle-track::after{transform:translateX(20px)}
 .ns-input{font-family:inherit;font-size:13px;border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;color:var(--ink);width:110px}
 
-/* PUSH SUBSCRIBE BANNER */
-.push-banner{background:linear-gradient(90deg,#1a3a5c,#1e4d7b);color:#fff;padding:10px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:13px;font-weight:600}
-.push-banner.hidden{display:none}
-.push-banner .pb-text{display:flex;align-items:center;gap:8px}
-.push-banner .pb-actions{display:flex;gap:8px}
-.pb-btn{font-family:inherit;font-size:12px;font-weight:700;border:none;border-radius:8px;padding:7px 14px;cursor:pointer}
-.pb-btn.allow{background:#36d27a;color:#fff}
-.pb-btn.allow:hover{background:#2ab864}
-.pb-btn.later{background:rgba(255,255,255,.15);color:#fff}
-.pb-btn.later:hover{background:rgba(255,255,255,.25)}
 </style>
 </head>
 <body>
@@ -308,15 +315,6 @@ footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}
   <div class="np-body" id="npBody"></div>
 </div>
 
-<!-- PUSH SUBSCRIBE BANNER -->
-<div class="push-banner hidden" id="pushBanner">
-  <div class="pb-text">🔔 Enable push notifications to receive alerts on your phone even when the app is closed</div>
-  <div class="pb-actions">
-    <button class="pb-btn allow" onclick="subscribePush()">Enable Now</button>
-    <button class="pb-btn later" onclick="dismissBanner()">Later</button>
-  </div>
-</div>
-
 <div class="navwrap">
   <div class="navtabs">
     <button class="navtab active" onclick="switchView('tasks')">📋 Tasks</button>
@@ -345,6 +343,32 @@ footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}
     </div>
 
     <div class="tasklist" id="taskList"></div>
+
+    <!-- Progress Stats -->
+    <div class="progress-section" id="progressSection" style="display:none">
+      <h4>📊 Today's Stats</h4>
+      <div class="progress-grid">
+        <div class="progress-stat">
+          <div class="ps-label">Completed</div>
+          <div class="ps-value" id="stat-completed">0</div>
+          <div class="ps-unit">tasks</div>
+        </div>
+        <div class="progress-stat">
+          <div class="ps-label">Completion %</div>
+          <div class="ps-value" id="stat-percent">0<span style="font-size:16px">%</span></div>
+        </div>
+        <div class="progress-stat">
+          <div class="ps-label">Overdue</div>
+          <div class="ps-value" id="stat-overdue">0</div>
+          <div class="ps-unit">tasks</div>
+        </div>
+        <div class="progress-stat">
+          <div class="ps-label">Urgent</div>
+          <div class="ps-value" id="stat-urgent">0</div>
+          <div class="ps-unit">tasks</div>
+        </div>
+      </div>
+    </div>
 
     <div class="resetnote" id="resetNote" style="display:none">
       🔄 Resets automatically every day at midnight (Riyadh time)
@@ -448,6 +472,18 @@ footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}
       </div>
       <div class="fg"><label>📅 Due Date</label>
         <input type="date" id="f-dueDate">
+      </div>
+    </div>
+
+    <div class="fgrow">
+      <div class="fg"><label>⏰ Deadline (Time)</label>
+        <input type="time" id="f-deadline" placeholder="14:30">
+      </div>
+      <div class="fg"><label>🔴 Mark as Urgent</label>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:8px">
+          <label class="toggle"><input type="checkbox" id="f-urgent-direct" onchange="toggleUrgentDirect()"><span class="toggle-track"></span></label>
+          <span style="font-size:11.5px;color:var(--muted)">Send direct message to group</span>
+        </div>
       </div>
     </div>
 
@@ -577,6 +613,22 @@ function effectiveStatus(t) {
   if (t.dueDate && t.dueDate < riyadhKey()) return "overdue";
   return t.status || "pending";
 }
+
+function formatCountdown(dueDate, deadline) {
+  if (!dueDate) return null;
+  const today = riyadhKey();
+  const [y,m,d] = dueDate.split("-").map(Number);
+  const dueTime = deadline ? deadline.split(":").map(Number) : [23,59];
+  const due = new Date(y, m-1, d, dueTime[0], dueTime[1], 0);
+  const now = new Date();
+  const diff = due - now;
+
+  if (diff < 0) return {label:"⏰ OVERDUE", cls:"overdue-badge"};
+  if (diff < 3600000) return {label:`⏰ ${Math.ceil(diff/60000)}min`, cls:"urgent-soon"};
+  if (diff < 86400000) return {label:`⏰ ${Math.floor(diff/3600000)}h`, cls:"urgent-soon"};
+  if (dueDate === today) return {label:"⏰ Today", cls:"warning"};
+  return {label:`📅 ${dueDate}`, cls:"safe"};
+}
 function dueFmt(ds) {
   if (!ds) return null;
   const today = riyadhKey();
@@ -695,7 +747,9 @@ function renderTasks(data) {
             ${di?`<span class="taskdue ${di.cls}">${di.label}</span>`:""}
             ${t.notes?`<span class="badge icon-only">📝</span>`:""}
             ${t.attachment?`<span class="badge icon-only">📎</span>`:""}
+            ${t.urgentDirect?`<span class="badge icon-only">📢</span>`:""}
           </div>
+          ${formatCountdown(t.dueDate, t.deadline)?`<div class="deadline-badge ${formatCountdown(t.dueDate, t.deadline).cls}"><span class="countdown">${formatCountdown(t.dueDate, t.deadline).label}</span></div>`:""}
         </div>
         <button class="expbtn" onclick="toggleDetail(event,'${t.id}')">▾</button>
       </div>
@@ -704,8 +758,9 @@ function renderTasks(data) {
           <div class="det-item"><div class="lbl">Priority</div><div class="val">${PRI_LABELS[t.priority||"medium"]}</div></div>
           <div class="det-item"><div class="lbl">Status</div><div class="val">${STA_LABELS[es]}</div></div>
           ${t.assignee?`<div class="det-item"><div class="lbl">Assignee</div><div class="val">👤 ${esc(t.assignee)}</div></div>`:""}
-          ${t.dueDate?`<div class="det-item"><div class="lbl">Due Date</div><div class="val">${t.dueDate}</div></div>`:""}
+          ${t.dueDate?`<div class="det-item"><div class="lbl">Due Date</div><div class="val">${t.dueDate}${t.deadline?' '+t.deadline:''}</div></div>`:""}
           ${t.reminder?`<div class="det-item"><div class="lbl">Reminder</div><div class="val">⏰ ${t.reminder}</div></div>`:""}
+          ${t.urgentDirect?`<div class="det-item"><div class="lbl">Direct Alert</div><div class="val">📢 Enabled</div></div>`:""}
         </div>
         ${t.notes?`<div class="notes-box">📝 ${esc(t.notes)}</div>`:""}
         ${t.attachment?`<div class="att-preview">${isImg?`<img src="${t.attachment.data}" alt="${esc(t.attachment.name)}">`:`<a class="att-link" href="${t.attachment.data}" download="${esc(t.attachment.name)}">📎 ${esc(t.attachment.name)}</a>`}</div>`:""}
@@ -719,6 +774,21 @@ function renderTasks(data) {
   }).join("");
   const done = tasks.filter(t=>effectiveStatus(t)==="completed").length;
   updateProgress(done, tasks.length, tasks);
+  updateProgressStats(tasks);
+}
+
+function updateProgressStats(tasks) {
+  const section = document.getElementById("progressSection");
+  if(!tasks||!tasks.length){ section.style.display="none"; return; }
+  const done = tasks.filter(t=>effectiveStatus(t)==="completed").length;
+  const overdue = tasks.filter(t=>effectiveStatus(t)==="overdue").length;
+  const urgent = tasks.filter(t=>t.priority==="urgent").length;
+  const pct = tasks.length ? Math.round(done/tasks.length*100) : 0;
+  document.getElementById("stat-completed").textContent = done;
+  document.getElementById("stat-percent").innerHTML = pct+'<span style="font-size:16px">%</span>';
+  document.getElementById("stat-overdue").textContent = overdue;
+  document.getElementById("stat-urgent").textContent = urgent;
+  section.style.display = "block";
 }
 
 function toggleDetail(e, id) {
@@ -788,8 +858,10 @@ function openAddModal() {
   document.getElementById("f-status").value="pending";
   document.getElementById("f-assignee").value="";
   document.getElementById("f-dueDate").value=riyadhKey();
+  document.getElementById("f-deadline").value="";
   document.getElementById("f-reminder").value="";
   document.getElementById("f-notes").value="";
+  document.getElementById("f-urgent-direct").checked=false;
   document.getElementById("f-fname").textContent="";
   document.getElementById("f-fpreview").innerHTML="";
   document.getElementById("f-dept").value=currentDept;
@@ -808,8 +880,10 @@ function openEditTaskModal(id) {
   document.getElementById("f-status").value=t.status==="overdue"?"pending":(t.status||"pending");
   document.getElementById("f-assignee").value=t.assignee||"";
   document.getElementById("f-dueDate").value=t.dueDate||"";
+  document.getElementById("f-deadline").value=t.deadline||"";
   document.getElementById("f-reminder").value=t.reminder||"";
   document.getElementById("f-notes").value=t.notes||"";
+  document.getElementById("f-urgent-direct").checked=t.urgentDirect||false;
   document.getElementById("f-dept").value=currentDept;
   if (t.attachment) {
     document.getElementById("f-fname").textContent=t.attachment.name;
@@ -822,6 +896,10 @@ function openEditTaskModal(id) {
     document.getElementById("f-fpreview").innerHTML="";
   }
   document.getElementById("taskModal").classList.add("open");
+}
+
+function toggleUrgentDirect() {
+  // This is just for UI toggle, actual save happens in saveTask
 }
 function closeTaskModal() {
   document.getElementById("taskModal").classList.remove("open");
@@ -844,14 +922,18 @@ function saveTask() {
   const label=(document.getElementById("f-label").value||"").trim();
   if (!label) { document.getElementById("f-label").focus(); return; }
   if (!liveDoc||!currentDept) return;
+  const priority = document.getElementById("f-priority").value;
+  const urgentDirect = document.getElementById("f-urgent-direct").checked;
   const td = {
     label,
-    priority: document.getElementById("f-priority").value,
+    priority,
     status: document.getElementById("f-status").value,
     assignee: document.getElementById("f-assignee").value.trim(),
     dueDate: document.getElementById("f-dueDate").value,
+    deadline: document.getElementById("f-deadline").value,
     reminder: document.getElementById("f-reminder").value,
     notes: document.getElementById("f-notes").value.trim(),
+    urgentDirect,
     attachment: pendingFile||null
   };
   let tasks=[...(liveDoc.tasks||[])];
@@ -862,6 +944,11 @@ function saveTask() {
     tasks.push(td);
   }
   docRef(currentDept).update({tasks});
+
+  // Send direct message if urgent + urgentDirect enabled
+  if(priority==="urgent" && urgentDirect && !editingTaskId) {
+    sendUrgentDirect(label, currentDept);
+  }
   closeTaskModal();
 }
 
@@ -1077,62 +1164,29 @@ async function sendWhatsApp(type, msg, dept) {
   } catch(e) { console.warn("WhatsApp send failed:", e); }
 }
 
-/* ===== ONESIGNAL ===== */
-const OS_APP_ID  = "b93dd12a-4a8a-4e84-93fa-6196b03664aa";
-const OS_API_KEY = atob("b3NfdjJfYXBwX3hlNjVja3NrcmpoaWplNzJtZ2xsYW50ZXZrMzJmb2E2ZG1idW00dTR3eTVsNzdxNnlvajRrem1ieHViY2NrYWNlcXk0NnliNm55aG9qcTJsanNldGFtYzMyc3ZmdXZteGJoYnNjb3E=");
-
-window.OneSignalDeferred = window.OneSignalDeferred || [];
-OneSignalDeferred.push(async function(OneSignal) {
-  await OneSignal.init({
-    appId: OS_APP_ID,
-    notifyButton: { enable: false },
-    allowLocalhostAsSecureOrigin: true,
-  });
-
-  const opted = OneSignal.User.PushSubscription.optedIn;
-  if (!opted && !localStorage.getItem("sgh_push_dismissed")) {
-    document.getElementById("pushBanner").classList.remove("hidden");
-  }
-
-  OneSignal.User.PushSubscription.addEventListener("change", e => {
-    if (e.current.optedIn) {
-      document.getElementById("pushBanner").classList.add("hidden");
-    }
-  });
-});
-
-async function subscribePush() {
-  OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.Notifications.requestPermission();
-    document.getElementById("pushBanner").classList.add("hidden");
-  });
-}
-
-function dismissBanner() {
-  localStorage.setItem("sgh_push_dismissed", "1");
-  document.getElementById("pushBanner").classList.add("hidden");
-}
-
-async function sendPushToAll(title, body, dept) {
-  const deptLabel = dept ? ` — ${DEPTS[dept]?.label}` : "";
+async function sendUrgentDirect(msg, dept) {
+  const deptLabel = dept ? DEPTS[dept]?.label : "";
+  const now = new Date().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+  const directMsg = `🚨 *URGENT TASK*
+━━━━━━━━━━━━
+🏥 ${deptLabel}
+📋 ${msg}
+⏰ ${now}
+━━━━━━━━━━━━
+_Reply: done to mark complete_`;
   try {
-    await fetch("https://onesignal.com/api/v1/notifications", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Basic ${OS_API_KEY}`
-      },
-      body: JSON.stringify({
-        app_id: OS_APP_ID,
-        included_segments: ["All"],
-        headings: { en: `SGH Pharmacy${deptLabel}` },
-        contents: { en: `${title}: ${body}` },
-        url: "https://yazeedalsomair-ship-it.github.io/yazeed-pharmacy/tasks.html",
-        priority: 10,
-        ttl: 3600
-      })
+    const body = new URLSearchParams({
+      token:    WA_TOKEN,
+      to:       WA_TO,
+      body:     directMsg,
+      priority: "10"
     });
-  } catch(e) { console.warn("Push send failed:", e); }
+    await fetch(`https://api.ultramsg.com/${WA_INSTANCE}/messages/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body
+    });
+  } catch(e) { console.warn("Direct send failed:", e); }
 }
 
 /* ===== NOTIFICATION ENGINE ===== */
@@ -1271,11 +1325,6 @@ function fireNotif(type, msg, dept, taskId){
     new Notification(`${N_ICONS[type]} SGH Pharmacy${dept?' — '+DEPTS[dept]?.label:''}`, {
       body: msg, icon: '', tag: key, renotify: true
     });
-  }
-
-  // OneSignal push → all subscribed pharmacists
-  if(NS.enabled && (type==='overdue'||type==='urgent'||type==='reminder')){
-    sendPushToAll(`${N_ICONS[type]} ${N_TITLES[type]}`, msg, dept);
   }
 
   // WhatsApp via UltraMsg → pharmacy group
@@ -1450,18 +1499,7 @@ document.getElementById("pinInput").addEventListener("keydown",e=>{ if(e.key==="
 renderDeptBtns();
 document.getElementById("todayDate").textContent = fmtDate();
 
-if ("Notification" in window) {
-  if (Notification.permission === "default") {
-    Notification.requestPermission().then(p => { if (p==="granted") startEngine(); });
-  } else if (Notification.permission === "granted") {
-    startEngine();
-  }
-}
-
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js").catch(()=>{});
-}
-
+startEngine();
 nUnread = nHistory.filter(n => !n.read).length;
 updateBell();
 </script>
