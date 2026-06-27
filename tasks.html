@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <style>
 :root {
   --navy:#1a2332; --navy2:#22324a; --green:#2d8b8b; --green2:#22a866;
@@ -257,6 +258,17 @@ footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}
 .toggle-track::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 .toggle input:checked+.toggle-track::after{transform:translateX(20px)}
 .ns-input{font-family:inherit;font-size:13px;border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;color:var(--ink);width:110px}
+
+/* PUSH SUBSCRIBE BANNER */
+.push-banner{background:linear-gradient(90deg,#1a3a5c,#1e4d7b);color:#fff;padding:10px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:13px;font-weight:600}
+.push-banner.hidden{display:none}
+.push-banner .pb-text{display:flex;align-items:center;gap:8px}
+.push-banner .pb-actions{display:flex;gap:8px}
+.pb-btn{font-family:inherit;font-size:12px;font-weight:700;border:none;border-radius:8px;padding:7px 14px;cursor:pointer}
+.pb-btn.allow{background:#36d27a;color:#fff}
+.pb-btn.allow:hover{background:#2ab864}
+.pb-btn.later{background:rgba(255,255,255,.15);color:#fff}
+.pb-btn.later:hover{background:rgba(255,255,255,.25)}
 </style>
 </head>
 <body>
@@ -294,6 +306,15 @@ footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}
     <button class="np-tab" onclick="switchNTab('settings')" id="ntab-settings">⚙ Settings</button>
   </div>
   <div class="np-body" id="npBody"></div>
+</div>
+
+<!-- PUSH SUBSCRIBE BANNER -->
+<div class="push-banner hidden" id="pushBanner">
+  <div class="pb-text">🔔 Enable push notifications to receive alerts on your phone even when the app is closed</div>
+  <div class="pb-actions">
+    <button class="pb-btn allow" onclick="subscribePush()">Enable Now</button>
+    <button class="pb-btn later" onclick="dismissBanner()">Later</button>
+  </div>
 </div>
 
 <div class="navwrap">
@@ -1020,6 +1041,65 @@ async function loadStats() {
   }
 }
 
+/* ===== ONESIGNAL ===== */
+const OS_APP_ID  = "b93dd12a-4a8a-4e84-93fa-6196b03664aa";
+const OS_API_KEY = atob("b3NfdjJfYXBwX3hlNjVja3NrcmpoaWplNzJtZ2xsYW50ZXZrMzJmb2E2ZG1idW00dTR3eTVsNzdxNnlvajRrem1ieHViY2NrYWNlcXk0NnliNm55aG9qcTJsanNldGFtYzMyc3ZmdXZteGJoYnNjb3E=");
+
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(async function(OneSignal) {
+  await OneSignal.init({
+    appId: OS_APP_ID,
+    serviceWorkerPath: "OneSignalSDKWorker.js",
+    serviceWorkerParam: { scope: "/yazeed-pharmacy/" },
+    notifyButton: { enable: false },
+  });
+
+  const opted = await OneSignal.User.PushSubscription.optedIn;
+  if (!opted && !localStorage.getItem("sgh_push_dismissed")) {
+    document.getElementById("pushBanner").classList.remove("hidden");
+  }
+
+  OneSignal.User.PushSubscription.addEventListener("change", e => {
+    if (e.current.optedIn) {
+      document.getElementById("pushBanner").classList.add("hidden");
+    }
+  });
+});
+
+async function subscribePush() {
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.User.PushSubscription.optIn();
+    document.getElementById("pushBanner").classList.add("hidden");
+  });
+}
+
+function dismissBanner() {
+  localStorage.setItem("sgh_push_dismissed", "1");
+  document.getElementById("pushBanner").classList.add("hidden");
+}
+
+async function sendPushToAll(title, body, dept) {
+  const deptLabel = dept ? ` — ${DEPTS[dept]?.label}` : "";
+  try {
+    await fetch("https://onesignal.com/api/v1/notifications", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Basic ${OS_API_KEY}`
+      },
+      body: JSON.stringify({
+        app_id: OS_APP_ID,
+        included_segments: ["All"],
+        headings: { en: `SGH Pharmacy${deptLabel}` },
+        contents: { en: `${title}: ${body}` },
+        url: "https://yazeedalsomair-ship-it.github.io/yazeed-pharmacy/tasks.html",
+        priority: 10,
+        ttl: 3600
+      })
+    });
+  } catch(e) { console.warn("Push send failed:", e); }
+}
+
 /* ===== NOTIFICATION ENGINE ===== */
 
 const N_ICONS = { reminder:'⏰', overdue:'⚠️', urgent:'🚨', summary:'📋', done:'✅' };
@@ -1151,11 +1231,16 @@ function fireNotif(type, msg, dept, taskId){
   const last = nLastFired[key]||0;
   if(Date.now()-last < interval) return;
 
-  // Browser notification
+  // Browser notification (local)
   if(NS.enabled && Notification.permission==='granted'){
     new Notification(`${N_ICONS[type]} SGH Pharmacy${dept?' — '+DEPTS[dept]?.label:''}`, {
       body: msg, icon: '', tag: key, renotify: true
     });
+  }
+
+  // OneSignal push → all subscribed pharmacists
+  if(NS.enabled && (type==='overdue'||type==='urgent'||type==='reminder')){
+    sendPushToAll(`${N_ICONS[type]} ${N_TITLES[type]}`, msg, dept);
   }
 
   // In-app
